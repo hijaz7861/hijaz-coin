@@ -1,0 +1,14 @@
+node_modules/
+direct_build/
+tmp/
+*.log
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.seed
+secrets/
+coverage/
+.cache/
+.DS_Store
