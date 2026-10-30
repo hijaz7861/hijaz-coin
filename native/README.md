@@ -18,8 +18,9 @@ This directory contains the early C++20 implementation of an independent Layer-1
 - Conditional real ML-DSA-65 key-generation, signing, verification, and ledger-authorization test when OpenSSL 3.5+ is available.
 - Structural block checks for supported header version, height, parent linkage, timestamp bounds, transaction count, duplicates, and transaction Merkle root.
 - Vendor-neutral LedgerStore interface and pre-commit validator checking header version, parent hash, transaction structure/uniqueness, transaction Merkle root, and resulting state root. The validator is only a preflight: ADR-0011 requires a durable backend to replay transactions from its own persisted parent state using a production signature verifier; caller-supplied resulting state is untrusted.
-- Bounded P2P frame codec with protocol magic/version, typed messages, length checks, and a 2 MiB payload cap.
-- Unit tests for hashing, deterministic state roots, address derivation, key/address mismatch, suite rejection, ledger success/replay/chain/signature failures, recipient-overflow atomicity, block structure/version, state-root enforcement, atomic block rollback, storage commit validation, and malformed P2P frames.
+- Bounded P2P frame codec with protocol magic/version, typed messages, length checks, and a 2 MiB payload cap; outbound encoding rejects unknown message types.
+- P2P framing is transport scaffolding only: it currently has no frame checksum/MAC, peer authentication, encryption, replay protection, handshake state machine, or socket-level resource controls. Do not expose it to untrusted networks as a production peer protocol.
+- Unit tests for hashing, deterministic state roots, address derivation, key/address mismatch, suite rejection, ledger success/replay/chain/signature failures, recipient-overflow atomicity, block structure/version, state-root enforcement, atomic block rollback, storage commit validation, malformed P2P frames, unknown outbound message types, and oversized outbound payloads.
 - Test assertions remain enabled in Release builds.
 
 ## Critical limitations
@@ -32,7 +33,6 @@ See:
 - `docs/ADR-0002-PQC-ACCOUNT-IDENTITY.md`
 - `docs/ADR-0003-DURABLE-LEDGER-STORAGE.md`
 - `docs/ADR-0007-DETERMINISTIC-STATE-ROOT.md`
-- `docs/ADR-0008-LEDGER-STORE-INTERFACE.md`
 - `docs/ADR-0008-LEDGER-STORE-INTERFACE.md`
 - `docs/ADR-0004-TRANSACTION-V3-WIRE-FORMAT.md`
 - `docs/ADR-0005-OPENSSL-ML-DSA-BACKEND.md`
@@ -49,7 +49,7 @@ cmake --build native/build --parallel
 ctest --test-dir native/build --output-on-failure
 ```
 
-The current source snapshot was compiled in a local CMake Release harness using GCC 14.2.0 and OpenSSL 3.5.7; CTest passed 1/1. The repository could not be cloned in that environment because GitHub DNS resolution failed, so the local harness was assembled from the branch's fetched source files rather than a full checkout. This was not a GitHub Actions run; the manually triggered workflow is `.github/workflows/native-ci.yml` and its run remains pending.
+Validation status: an earlier source snapshot passed a local CMake Release build and CTest using GCC 14.2.0 and OpenSSL 3.5.7. That result predates the latest P2P changes and must not be treated as validation of the current branch. The latest branch revision has not yet been compiled or tested. The repository could not be cloned in the earlier environment because GitHub DNS resolution failed. The manually triggered workflow is `.github/workflows/native-ci.yml`; it has not been dispatched in order to conserve the repository's limited Actions minutes.
 
 ## Design constraints
 
