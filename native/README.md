@@ -39,7 +39,7 @@ cmake --build native/build --parallel
 ctest --test-dir native/build --output-on-failure
 ```
 
-These are build instructions, not a claim that compilation or tests have succeeded. The manually triggered workflow is `.github/workflows/native-ci.yml`.
+The current source snapshot was compiled in a local CMake Release harness using GCC 14.2.0 and OpenSSL 3.5.7; CTest passed 1/1. The repository could not be cloned in that environment because GitHub DNS resolution failed, so the local harness was assembled from the branch's fetched source files rather than a full checkout. This was not a GitHub Actions run; the manually triggered workflow is `.github/workflows/native-ci.yml` and its run remains pending.
 
 ## Design constraints
 
