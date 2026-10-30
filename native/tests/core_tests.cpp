@@ -350,6 +350,19 @@ int main() {
     // Failed parsing must not partially overwrite the caller's previous frame.
     assert(decoded.type == p2p::MessageType::Ping);
     assert(decoded.payload == ping_payload);
+    auto unsupported_version = frame;
+    unsupported_version[7] = 0x02;
+    assert(p2p::decode_frame(unsupported_version, decoded) ==
+           p2p::FrameError::UnsupportedVersion);
+    auto oversized_declared_length = frame;
+    oversized_declared_length[10] = 0x00;
+    oversized_declared_length[11] = 0x20;
+    oversized_declared_length[12] = 0x00;
+    oversized_declared_length[13] = 0x01;
+    assert(p2p::decode_frame(oversized_declared_length, decoded) ==
+           p2p::FrameError::Oversized);
+    const std::vector<std::uint8_t> short_header{0x48, 0x4A, 0x5A};
+    assert(p2p::decode_frame(short_header, decoded) == p2p::FrameError::TooShort);
     auto truncated = frame;
     truncated.pop_back();
     assert(p2p::decode_frame(truncated, decoded) == p2p::FrameError::LengthMismatch);
