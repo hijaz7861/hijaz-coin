@@ -21,10 +21,15 @@ std::uint32_t get_u32(std::span<const std::uint8_t> b, std::size_t p) {
            static_cast<std::uint32_t>(b[p + 3]);
 }
 bool known_type(std::uint16_t v) { return v >= 1 && v <= 10; }
+bool known_type(MessageType type) {
+    return known_type(static_cast<std::uint16_t>(type));
+}
 }
 
 std::vector<std::uint8_t> encode_frame(MessageType type, std::span<const std::uint8_t> payload) {
-    if (payload.size() > max_payload_size) return {};
+    // Reject invalid enum values at the encoding boundary as well as decode.
+    // This prevents local callers from emitting frames peers must reject.
+    if (!known_type(type) || payload.size() > max_payload_size) return {};
     std::vector<std::uint8_t> out;
     out.reserve(frame_header_size + payload.size());
     put_u32(out, protocol_magic);
