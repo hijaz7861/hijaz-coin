@@ -2,6 +2,12 @@
 #include "hijaz/block_validation.hpp"
 #include "hijaz/hash.hpp"
 #include "hijaz/ledger.hpp"
+#ifdef HJZ_HAS_OPENSSL_ML_DSA
+#include "hijaz/openssl_ml_dsa.hpp"
+#include <openssl/core_names.h>
+#include <openssl/evp.h>
+#include <memory>
+#endif
 #include "hijaz/p2p_frame.hpp"
 #include "hijaz/transaction.hpp"
 
@@ -22,6 +28,57 @@ public:
     }
 };
 }
+
+#ifdef HJZ_HAS_OPENSSL_ML_DSA
+namespace {
+using TestPkey = std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)>;
+using TestPkeyContext = std::unique_ptr<EVP_PKEY_CTX, decltype(&EVP_PKEY_CTX_free)>;
+using TestSignature = std::unique_ptr<EVP_SIGNATURE, decltype(&EVP_SIGNATURE_free)>;
+
+struct GeneratedMlDsaKey {
+    TestPkey key{nullptr, EVP_PKEY_free};
+    std::vector<std::uint8_t> public_key;
+};
+
+GeneratedMlDsaKey generate_ml_dsa65_key() {
+    GeneratedMlDsaKey generated;
+    generated.key.reset(EVP_PKEY_Q_keygen(nullptr, nullptr, "ML-DSA-65"));
+    assert(generated.key != nullptr);
+
+    std::size_t public_key_size = 0;
+    assert(EVP_PKEY_get_octet_string_param(
+        generated.key.get(), OSSL_PKEY_PARAM_PUB_KEY,
+        nullptr, 0, &public_key_size) == 1);
+    generated.public_key.resize(public_key_size);
+    assert(EVP_PKEY_get_octet_string_param(
+        generated.key.get(), OSSL_PKEY_PARAM_PUB_KEY,
+        generated.public_key.data(), generated.public_key.size(),
+        &public_key_size) == 1);
+    generated.public_key.resize(public_key_size);
+    return generated;
+}
+
+std::vector<std::uint8_t> sign_ml_dsa65(
+    EVP_PKEY* key, const std::vector<std::uint8_t>& message) {
+    TestSignature algorithm(EVP_SIGNATURE_fetch(nullptr, "ML-DSA-65", nullptr),
+                            EVP_SIGNATURE_free);
+    assert(algorithm != nullptr);
+    TestPkeyContext context(EVP_PKEY_CTX_new_from_pkey(nullptr, key, nullptr),
+                            EVP_PKEY_CTX_free);
+    assert(context != nullptr);
+    assert(EVP_PKEY_sign_message_init(context.get(), algorithm.get(), nullptr) == 1);
+
+    std::size_t signature_size = 0;
+    assert(EVP_PKEY_sign(context.get(), nullptr, &signature_size,
+                         message.data(), message.size()) == 1);
+    std::vector<std::uint8_t> signature(signature_size);
+    assert(EVP_PKEY_sign(context.get(), signature.data(), &signature_size,
+                         message.data(), message.size()) == 1);
+    signature.resize(signature_size);
+    return signature;
+}
+} // namespace
+#endif
 
 int main() {
     using namespace hijaz;
