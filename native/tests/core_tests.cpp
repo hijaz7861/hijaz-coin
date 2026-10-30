@@ -285,6 +285,22 @@ int main() {
     bad_state_commit.resulting_state.accounts.at(alice).balance += 1;
     assert(validate_atomic_block_commit(bad_state_commit) ==
            StoreCommitValidationError::StateRootMismatch);
+
+    // Security boundary regression: the preflight validator is deliberately
+    // NOT a state-transition proof. A caller can fabricate an unrelated state
+    // and update the claimed root; only a durable store that replays from its
+    // own persisted parent state with the production verifier can reject it.
+    // This assertion prevents future code/docs from treating this helper as
+    // sufficient authorization to persist caller-supplied state.
+    auto forged_state_commit = valid_commit;
+    forged_state_commit.resulting_state = LedgerState{};
+    forged_state_commit.resulting_state.accumulated_fees = 999;
+    forged_state_commit.block.header.state_root =
+        ledger_state_root(forged_state_commit.resulting_state);
+    assert(validate_atomic_block_commit(forged_state_commit) ==
+           StoreCommitValidationError::None);
+    assert(ledger_state_root(forged_state_commit.resulting_state) !=
+           ledger_state_root(block_state));
     auto duplicate_commit = valid_commit;
     duplicate_commit.block.transactions.push_back(duplicate_commit.block.transactions.front());
     duplicate_commit.block.header.merkle_root =
