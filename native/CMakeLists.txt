@@ -23,6 +23,11 @@ target_compile_options(hijaz_core PRIVATE
 
 add_executable(hijaz_core_tests tests/core_tests.cpp)
 target_link_libraries(hijaz_core_tests PRIVATE hijaz_core)
+# The test suite uses assert(); keep assertions active even in Release builds.
+target_compile_options(hijaz_core_tests PRIVATE
+    $<$<CXX_COMPILER_ID:GNU,Clang>:-UNDEBUG>
+    $<$<CXX_COMPILER_ID:MSVC>:/UNDEBUG>
+)
 
 enable_testing()
 add_test(NAME hijaz_core_tests COMMAND hijaz_core_tests)
