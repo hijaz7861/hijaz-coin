@@ -24,6 +24,7 @@ Status: engineering draft; not a mainnet specification.
 ## Storage direction
 
 - ADR-0008 defines the vendor-neutral atomic LedgerStore boundary; it is an interface, not persistence.
+- ADR-0011 documents a critical trust boundary: a durable backend must replay transactions from its own persisted parent state with a production signature verifier; matching a caller-supplied state root is not sufficient.
 - ADR-0010 selects SQLite as the first durable-backend implementation candidate, subject to implementation, benchmarks, crash-recovery tests, and ARM64 validation.
 - SQLite's signed 64-bit INTEGER must not be used to silently store the full uint64 protocol domain; encode values as fixed-width BLOBs or define an explicit protocol bound.
 
