@@ -17,7 +17,7 @@ This directory contains the early C++20 implementation of an independent Layer-1
 - OpenSSL 3.5+ ML-DSA verifier for ML-DSA-44/65/87 with strict public-key and signature size checks.
 - Conditional real ML-DSA-65 key-generation, signing, verification, and ledger-authorization test when OpenSSL 3.5+ is available.
 - Structural block checks for supported header version, height, parent linkage, timestamp bounds, transaction count, duplicates, and transaction Merkle root.
-- Vendor-neutral LedgerStore interface and pre-commit validator checking header version, parent hash, transaction structure/uniqueness, transaction Merkle root, and resulting state root.
+- Vendor-neutral LedgerStore interface and pre-commit validator checking header version, parent hash, transaction structure/uniqueness, transaction Merkle root, and resulting state root. The validator is only a preflight: ADR-0011 requires a durable backend to replay transactions from its own persisted parent state using a production signature verifier; caller-supplied resulting state is untrusted.
 - Bounded P2P frame codec with protocol magic/version, typed messages, length checks, and a 2 MiB payload cap.
 - Unit tests for hashing, deterministic state roots, address derivation, key/address mismatch, suite rejection, ledger success/replay/chain/signature failures, recipient-overflow atomicity, block structure/version, state-root enforcement, atomic block rollback, storage commit validation, and malformed P2P frames.
 - Test assertions remain enabled in Release builds.
@@ -26,7 +26,7 @@ This directory contains the early C++20 implementation of an independent Layer-1
 
 This is **not a functioning blockchain or testnet**. The OpenSSL-backed ML-DSA verifier is implemented and exercised by a real ML-DSA-65 test when OpenSSL 3.5+ is available. The generic ledger unit tests also retain a fake suite-1 verifier strictly for state-transition testing; it is not cryptography and must never be accepted by a production node. The real ML-DSA test uses reserved test-only suite ID 0x7FFE. No production ML-DSA suite ID, activation rule, or wallet key-management workflow has been approved.
 
-No persistent LedgerStore backend is implemented: the new interface is a contract only, not durable storage. Consensus/fork choice/finality, mining or validator selection, live P2P sockets/peer manager, wallet, RPC, genesis rules, and security audit remain unimplemented. The current state-root and block-header V2 formats are prototypes and are not frozen production consensus rules. Structural block validation does not yet execute transactions or verify block authorization/consensus. Do not use this prototype for funds or production.
+No persistent LedgerStore backend is implemented: the new interface is a contract only, not durable storage. ADR-0011 documents the required state-replay trust boundary; matching a caller-supplied state root alone is insufficient. Consensus/fork choice/finality, mining or validator selection, live P2P sockets/peer manager, wallet, RPC, genesis rules, and security audit remain unimplemented. The current state-root and block-header V2 formats are prototypes and are not frozen production consensus rules. Structural block validation does not yet execute transactions or verify block authorization/consensus. Do not use this prototype for funds or production.
 
 See:
 - `docs/ADR-0002-PQC-ACCOUNT-IDENTITY.md`
