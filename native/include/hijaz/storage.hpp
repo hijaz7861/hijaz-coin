@@ -22,14 +22,23 @@ enum class StoreResult {
     StorageFailure
 };
 
-// Complete payload required for one atomic canonical-chain publication.
-// The state must already have passed deterministic block execution and its
-// root must match block.header.state_root before it reaches this boundary.
+enum class StoreCommitValidationError {
+    None,
+    UnsupportedBlockVersion,
+    ParentMismatch,
+    InvalidTransaction,
+    MerkleRootMismatch,
+    StateRootMismatch
+};
+
 struct AtomicBlockCommit {
     Hash256 expected_parent_hash{};
     Block block;
     LedgerState resulting_state;
 };
+
+[[nodiscard]] StoreCommitValidationError validate_atomic_block_commit(
+    const AtomicBlockCommit& commit);
 
 class LedgerStore {
 public:
@@ -46,6 +55,7 @@ public:
     // index, resulting ledger state, transaction indexes, state root, tip,
     // and undo data. On any failure, none of those changes may become visible.
     // expected_parent_hash provides optimistic concurrency protection.
+    // Implementations must call validate_atomic_block_commit before writing.
     [[nodiscard]] virtual StoreResult commit_validated_block_atomically(
         const AtomicBlockCommit& commit) = 0;
 };
