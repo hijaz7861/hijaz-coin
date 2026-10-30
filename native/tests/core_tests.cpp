@@ -347,9 +347,14 @@ int main() {
     auto corrupted = frame;
     corrupted[0] ^= 0xffU;
     assert(p2p::decode_frame(corrupted, decoded) == p2p::FrameError::BadMagic);
+    // Failed parsing must not partially overwrite the caller's previous frame.
+    assert(decoded.type == p2p::MessageType::Ping);
+    assert(decoded.payload == ping_payload);
     auto truncated = frame;
     truncated.pop_back();
     assert(p2p::decode_frame(truncated, decoded) == p2p::FrameError::LengthMismatch);
+    assert(decoded.type == p2p::MessageType::Ping);
+    assert(decoded.payload == ping_payload);
 
 #ifdef HJZ_HAS_OPENSSL_ML_DSA
     // Real FIPS 204 ML-DSA-65 key generation, signing, import, and verification.
