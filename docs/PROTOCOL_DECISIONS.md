@@ -21,6 +21,18 @@ Status: engineering draft; not a mainnet specification.
 - An OpenSSL 3.5+ backend implements FIPS 204 ML-DSA-44/65/87 verification; the real ML-DSA-65 integration test uses reserved test-only suite 0x7FFE. No production suite ID is assigned.
 - Hashing uses SHA3-256 via OpenSSL EVP.
 
+## Storage direction
+
+- ADR-0008 defines the vendor-neutral atomic LedgerStore boundary; it is an interface, not persistence.
+- ADR-0010 selects SQLite as the first durable-backend implementation candidate, subject to implementation, benchmarks, crash-recovery tests, and ARM64 validation.
+- SQLite's signed 64-bit INTEGER must not be used to silently store the full uint64 protocol domain; encode values as fixed-width BLOBs or define an explicit protocol bound.
+
+## Consensus status
+
+- ADR-0009 defines the evaluation gate for PoW, PoS, and BFT-style PoS.
+- No consensus family, fork-choice rule, finality model, validator/miner eligibility, issuance, reward, or penalty parameters have been selected.
+- Structural block validation is not consensus and does not authorize a block as canonical.
+
 ## Open parameters — do not silently assume
 
 1. Total supply, smallest unit, and display precision.
