@@ -51,3 +51,10 @@ The backend supports all three standardized parameter sets, but this ADR does no
 ## Limitations
 
 This backend currently provides verification only to the ledger. There is no production wallet/key-generation UX, secure private-key storage, recovery flow, signing service, production suite ID, or mainnet activation. ML-KEM transport key establishment is not implemented by this ADR.
+
+## Primary references
+
+- OpenSSL 3.5 EVP ML-DSA signature API: https://docs.openssl.org/3.5/man7/EVP_SIGNATURE-ML-DSA/
+- OpenSSL 3.5 ML-DSA key management and raw public-key parameters: https://docs.openssl.org/3.5/man7/EVP_PKEY-ML-DSA/
+- NIST FIPS 204 (final): https://csrc.nist.gov/pubs/fips/204/final
+- FIPS 204 Table 2 key and signature sizes: https://nvlpubs.nist.gov/nistpubs/fips/nist.fips.204.pdf
