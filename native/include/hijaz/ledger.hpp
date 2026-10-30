@@ -19,6 +19,10 @@ struct LedgerState {
     std::uint64_t accumulated_fees{0};
 };
 
+// Deterministic commitment to all account balances, nonces, and accumulated fees.
+// This is a prototype commitment format, not yet a production consensus rule.
+[[nodiscard]] Hash256 ledger_state_root(const LedgerState& state);
+
 class SignatureVerifier {
 public:
     virtual ~SignatureVerifier() = default;
