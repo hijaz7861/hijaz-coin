@@ -27,6 +27,7 @@ enum class StoreCommitValidationError {
     UnsupportedBlockVersion,
     ParentMismatch,
     InvalidTransaction,
+    DuplicateTransaction,
     MerkleRootMismatch,
     StateRootMismatch
 };
