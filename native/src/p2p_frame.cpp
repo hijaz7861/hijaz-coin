@@ -36,16 +36,16 @@ std::vector<std::uint8_t> encode_frame(MessageType type, std::span<const std::ui
 }
 
 FrameError decode_frame(std::span<const std::uint8_t> bytes, Frame& out) {
-    if (bytes.size() < frame_header_size + 4U) return FrameError::TooShort;
+    if (bytes.size() < frame_header_size) return FrameError::TooShort;
     if (get_u32(bytes, 0) != protocol_magic) return FrameError::BadMagic;
     if (get_u32(bytes, 4) != protocol_version) return FrameError::UnsupportedVersion;
     const auto raw_type = get_u16(bytes, 8);
     if (!known_type(raw_type)) return FrameError::UnknownType;
     const auto length = get_u32(bytes, 10);
     if (length > max_payload_size) return FrameError::Oversized;
-    if (bytes.size() != frame_header_size + 4U + length) return FrameError::LengthMismatch;
+    if (bytes.size() != frame_header_size + length) return FrameError::LengthMismatch;
     out.type = static_cast<MessageType>(raw_type);
-    out.payload.assign(bytes.begin() + static_cast<std::ptrdiff_t>(frame_header_size + 4U), bytes.end());
+    out.payload.assign(bytes.begin() + static_cast<std::ptrdiff_t>(frame_header_size), bytes.end());
     return FrameError::None;
 }
 } // namespace hijaz::p2p
