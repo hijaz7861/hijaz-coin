@@ -14,6 +14,9 @@ Status: engineering draft; not a mainnet specification.
 - Account-state prototype uses sequential nonces and explicit fee accounting.
 - Ledger application is atomic: invalid transactions leave state unchanged.
 - Block transaction execution is ordered and all-or-nothing across the entire block transaction list.
+- Ledger state roots commit to sorted address/balance/next-nonce leaves and accumulated fees using domain-separated SHA3-256.
+- Block header V2 includes the state root in canonical serialization and block hashing; unsupported header versions are rejected.
+- Block execution must reproduce the header state root before its candidate state can be committed.
 - Signature verification is injected through a suite-aware interface; the generic fake suite 1 is test-only.
 - An OpenSSL 3.5+ backend implements FIPS 204 ML-DSA-44/65/87 verification; the real ML-DSA-65 integration test uses reserved test-only suite 0x7FFE. No production suite ID is assigned.
 - Hashing uses SHA3-256 via OpenSSL EVP.
