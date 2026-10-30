@@ -10,6 +10,7 @@ namespace hijaz {
 struct AccountState {
     std::uint64_t balance{0};
     std::uint64_t next_nonce{1};
+    bool operator==(const AccountState&) const = default;
 };
 
 struct LedgerState {
