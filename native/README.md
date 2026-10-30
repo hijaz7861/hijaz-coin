@@ -9,13 +9,15 @@ This directory contains the early C++20 implementation of an independent Layer-1
 - Account addresses are derived from suite ID + canonical public key using domain-separated SHA3-256; ledger rejects sender/key mismatches.
 - Chain-ID binding, integer amount/fee fields, sequential account nonces, and deterministic signing payload.
 - SHA3-256 through OpenSSL EVP.
-- Domain-separated transaction IDs, block hashes, and binary Merkle-tree hashing.
+- Domain-separated transaction IDs, block hashes, transaction Merkle roots, and deterministic ledger state roots over sorted account address/balance/nonce leaves plus accumulated fees.
+- Block header V2 commits to the state root; unsupported header versions are rejected.
 - Deterministic ledger transitions with balance, fee, nonce, replay, overflow, and atomic candidate-state checks.
-- Block transaction executor applies transactions in canonical block order and commits the resulting ledger state only if every transaction succeeds; a rejected transaction leaves the original block state untouched.
+- Block transaction executor applies transactions in canonical block order, checks the computed state root against the V2 header, and commits the resulting ledger state only if every transaction succeeds and the root matches.
 - Explicit verifier capability check; unknown authorization suites are rejected.
 - OpenSSL 3.5+ ML-DSA verifier for ML-DSA-44/65/87 with strict public-key and signature size checks.
 - Conditional real ML-DSA-65 key-generation, signing, verification, and ledger-authorization test when OpenSSL 3.5+ is available.
-- Structural block checks for height, parent linkage, timestamp bounds, transaction count, duplicates, and Merkle root.
+- Structural block checks for supported header version, height, parent linkage, timestamp bounds, transaction count, duplicates, and transaction Merkle root.
+- Vendor-neutral LedgerStore interface defining atomic canonical block publication, parent-tip conflict checks, canonical height lookups, block reads, and ledger-state reads.
 - Bounded P2P frame codec with protocol magic/version, typed messages, length checks, and a 2 MiB payload cap.
 - Unit tests for hashing, address derivation, key/address mismatch, suite rejection, ledger success/replay/chain/signature failures, recipient-overflow atomicity, block structure, and malformed P2P frames.
 - Test assertions remain enabled in Release builds.
@@ -24,11 +26,13 @@ This directory contains the early C++20 implementation of an independent Layer-1
 
 This is **not a functioning blockchain or testnet**. The OpenSSL-backed ML-DSA verifier is implemented and exercised by a real ML-DSA-65 test when OpenSSL 3.5+ is available. The generic ledger unit tests also retain a fake suite-1 verifier strictly for state-transition testing; it is not cryptography and must never be accepted by a production node. The real ML-DSA test uses reserved test-only suite ID 0x7FFE. No production ML-DSA suite ID, activation rule, or wallet key-management workflow has been approved.
 
-Persistent storage, consensus/fork choice/finality, mining or validator selection, live P2P sockets/peer manager, wallet, RPC, state roots, genesis rules, and security audit are not implemented. Structural block validation does not yet execute transactions or verify block authorization/consensus. Do not use this prototype for funds or production.
+No persistent LedgerStore backend is implemented: the new interface is a contract only, not durable storage. Consensus/fork choice/finality, mining or validator selection, live P2P sockets/peer manager, wallet, RPC, genesis rules, and security audit remain unimplemented. The current state-root and block-header V2 formats are prototypes and are not frozen production consensus rules. Structural block validation does not yet execute transactions or verify block authorization/consensus. Do not use this prototype for funds or production.
 
 See:
 - `docs/ADR-0002-PQC-ACCOUNT-IDENTITY.md`
 - `docs/ADR-0003-DURABLE-LEDGER-STORAGE.md`
+- `docs/ADR-0007-DETERMINISTIC-STATE-ROOT.md`
+- `docs/ADR-0008-LEDGER-STORE-INTERFACE.md`
 - `docs/ADR-0004-TRANSACTION-V3-WIRE-FORMAT.md`
 - `docs/PROTOCOL_DECISIONS.md`
 
