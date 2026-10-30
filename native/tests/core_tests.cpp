@@ -90,5 +90,27 @@ int main() {
     assert(ledger.apply(state, payment, test_verifier) == ApplyResult::InvalidSignature);
     assert(state.accounts == before_replay.accounts);
 
+    Block candidate;
+    candidate.header.height = 2;
+    candidate.header.timestamp = 101;
+    candidate.header.previous_hash = header.hash();
+    candidate.transactions = {payment};
+    candidate.header.merkle_root = merkle_root(candidate.transactions);
+    assert(validate_block_structure(candidate, 2, header.hash(), 100, 105) ==
+           BlockStructureError::None);
+    candidate.header.height = 3;
+    assert(validate_block_structure(candidate, 2, header.hash(), 100, 105) ==
+           BlockStructureError::WrongHeight);
+
+    const std::vector<std::uint8_t> ping_payload{0x10, 0x20, 0x30};
+    const auto frame = p2p::encode_frame(p2p::MessageType::Ping, ping_payload);
+    p2p::Frame decoded{p2p::MessageType::Reject, {}};
+    assert(p2p::decode_frame(frame, decoded) == p2p::FrameError::None);
+    assert(decoded.type == p2p::MessageType::Ping);
+    assert(decoded.payload == ping_payload);
+    auto corrupted = frame;
+    corrupted[0] ^= 0xffU;
+    assert(p2p::decode_frame(corrupted, decoded) == p2p::FrameError::BadMagic);
+
     std::cout << "HJZ native foundation and ledger tests: PASS\n";
 }
