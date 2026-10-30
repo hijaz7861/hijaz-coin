@@ -21,6 +21,7 @@ add_library(hijaz_core
     src/block.cpp
     src/ledger.cpp
     src/block_validation.cpp
+    src/block_execution.cpp
     src/p2p_frame.cpp
 )
 if(HJZ_OPENSSL_ML_DSA_AVAILABLE)
