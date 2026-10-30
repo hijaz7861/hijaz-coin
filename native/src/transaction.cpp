@@ -1,5 +1,6 @@
 #include "hijaz/transaction.hpp"
 
+#include <algorithm>
 #include <span>
 
 namespace hijaz {
@@ -24,10 +25,10 @@ void append_bytes(std::vector<std::uint8_t>& out, std::span<const std::uint8_t> 
 Hash256 derive_account_address(
     std::uint16_t authorization_suite,
     const std::vector<std::uint8_t>& canonical_public_key) {
-    std::vector<std::uint8_t> input;
-    input.reserve(2U + canonical_public_key.size());
-    append_u16(input, authorization_suite);
-    append_bytes(input, canonical_public_key);
+    std::vector<std::uint8_t> input(2U + canonical_public_key.size());
+    input[0] = static_cast<std::uint8_t>((authorization_suite >> 8U) & 0xffU);
+    input[1] = static_cast<std::uint8_t>(authorization_suite & 0xffU);
+    std::copy(canonical_public_key.begin(), canonical_public_key.end(), input.begin() + 2);
     return domain_hash("HJZ/ADDRESS/V1", input);
 }
 
@@ -44,7 +45,7 @@ bool Transaction::structurally_valid() const noexcept {
 
 std::vector<std::uint8_t> Transaction::signing_payload() const {
     std::vector<std::uint8_t> out;
-    out.reserve(5U + 1U + 2U + 4U + 2U + 4U + public_key.size() +
+    out.reserve(5U + 1U + 2U + 4U + 4U + public_key.size() +
                 32U + 32U + 8U + 8U + 8U);
     constexpr std::uint8_t domain[] = {'H','J','Z','T',3};
     append_bytes(out, domain);
