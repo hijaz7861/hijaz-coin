@@ -21,19 +21,20 @@ void append_hash(std::vector<std::uint8_t>& out, const Hash256& hash) {
 
 std::vector<std::uint8_t> BlockHeader::canonical_bytes() const {
     std::vector<std::uint8_t> out;
-    out.reserve(4 + 8 + 8 + 32 + 32 + 8);
+    out.reserve(4 + 8 + 8 + 32 + 32 + 32 + 8);
     append_u32(out, version);
     append_u64(out, height);
     append_u64(out, timestamp);
     append_hash(out, previous_hash);
     append_hash(out, merkle_root);
+    append_hash(out, state_root);
     append_u64(out, nonce);
     return out;
 }
 
 Hash256 BlockHeader::hash() const {
     const auto bytes = canonical_bytes();
-    return domain_hash("HJZ/BLOCK/V1", bytes);
+    return domain_hash("HJZ/BLOCK/V2", bytes);
 }
 
 Hash256 merkle_root(const std::vector<Transaction>& transactions) {
