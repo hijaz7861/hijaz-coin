@@ -219,6 +219,10 @@ int main() {
     candidate.header.merkle_root = merkle_root(candidate.transactions);
     assert(validate_block_structure(candidate, 2, header.hash(), 100, 105) ==
            BlockStructureError::None);
+    candidate.header.version = 1;
+    assert(validate_block_structure(candidate, 2, header.hash(), 100, 105) ==
+           BlockStructureError::UnsupportedVersion);
+    candidate.header.version = 2;
     candidate.header.height = 3;
     assert(validate_block_structure(candidate, 2, header.hash(), 100, 105) ==
            BlockStructureError::WrongHeight);
