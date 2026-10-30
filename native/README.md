@@ -9,6 +9,8 @@ This directory begins a new, independent C++20 Layer-1 implementation. It is del
 - SHA3-256 through OpenSSL EVP (not a custom cryptographic primitive).
 - Domain-separated transaction IDs, block hashes, and binary Merkle-tree hashing.
 - Deterministic account-ledger state transition with balance, fee, nonce, overflow, and replay checks.
+- Structural block checks for height, parent linkage, timestamp bounds, transaction count, duplicates, and Merkle root.
+- Bounded P2P frame codec with protocol magic/version, typed messages, payload length checks, and a 2 MiB frame limit.
 - Atomic state application: a rejected transaction does not mutate the supplied state.
 - An injected signature-verification interface. Unit tests use a deliberately fake verifier only to test ledger behavior.
 
