@@ -2,6 +2,7 @@
 
 #include "hijaz/ledger.hpp"
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 
