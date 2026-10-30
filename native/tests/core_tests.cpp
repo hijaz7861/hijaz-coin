@@ -333,13 +333,17 @@ int main() {
 
     const std::vector<std::uint8_t> ping_payload{0x10, 0x20, 0x30};
     const auto frame = p2p::encode_frame(p2p::MessageType::Ping, ping_payload);
-    assert(!p2p::encode_frame(static_cast<p2p::MessageType>(0xFFFF), ping_payload).size());
+    assert(p2p::encode_frame(static_cast<p2p::MessageType>(0xFFFF), ping_payload).empty());
     const std::vector<std::uint8_t> oversized_payload(p2p::max_payload_size + 1U, 0xAA);
     assert(p2p::encode_frame(p2p::MessageType::Ping, oversized_payload).empty());
     p2p::Frame decoded{p2p::MessageType::Reject, {}};
     assert(p2p::decode_frame(frame, decoded) == p2p::FrameError::None);
     assert(decoded.type == p2p::MessageType::Ping);
     assert(decoded.payload == ping_payload);
+    auto unknown_type = frame;
+    unknown_type[8] = 0xFF;
+    unknown_type[9] = 0xFF;
+    assert(p2p::decode_frame(unknown_type, decoded) == p2p::FrameError::UnknownType);
     auto corrupted = frame;
     corrupted[0] ^= 0xffU;
     assert(p2p::decode_frame(corrupted, decoded) == p2p::FrameError::BadMagic);
