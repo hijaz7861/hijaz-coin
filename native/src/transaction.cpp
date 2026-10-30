@@ -1,9 +1,13 @@
 #include "hijaz/transaction.hpp"
 
-#include <limits>
+#include <span>
 
 namespace hijaz {
 namespace {
+void append_u32(std::vector<std::uint8_t>& out, std::uint32_t value) {
+    for (int shift = 24; shift >= 0; shift -= 8)
+        out.push_back(static_cast<std::uint8_t>((value >> shift) & 0xffU));
+}
 void append_u64(std::vector<std::uint8_t>& out, std::uint64_t value) {
     for (int shift = 56; shift >= 0; shift -= 8)
         out.push_back(static_cast<std::uint8_t>((value >> shift) & 0xffU));
@@ -20,12 +24,14 @@ bool Transaction::structurally_valid() const noexcept {
 
 std::vector<std::uint8_t> Transaction::signing_payload() const {
     std::vector<std::uint8_t> out;
-    out.reserve(4 + 32 + 32 + 8 + 8);
-    constexpr std::uint8_t domain[] = {'H','J','Z','T',1};
+    out.reserve(4 + 32 + 32 + 8 + 8 + 8);
+    constexpr std::uint8_t domain[] = {'H','J','Z','T',2};
     append_bytes(out, domain);
+    append_u32(out, chain_id);
     append_bytes(out, sender);
     append_bytes(out, receiver);
     append_u64(out, amount);
+    append_u64(out, fee);
     append_u64(out, nonce);
     return out;
 }
@@ -39,6 +45,6 @@ std::vector<std::uint8_t> Transaction::canonical_bytes() const {
 
 Hash256 Transaction::id() const {
     const auto bytes = canonical_bytes();
-    return domain_hash("HJZ/TXID/V1", bytes);
+    return domain_hash("HJZ/TXID/V2", bytes);
 }
 } // namespace hijaz
