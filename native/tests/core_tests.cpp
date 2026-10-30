@@ -285,6 +285,12 @@ int main() {
     bad_state_commit.resulting_state.accounts.at(alice).balance += 1;
     assert(validate_atomic_block_commit(bad_state_commit) ==
            StoreCommitValidationError::StateRootMismatch);
+    auto duplicate_commit = valid_commit;
+    duplicate_commit.block.transactions.push_back(duplicate_commit.block.transactions.front());
+    duplicate_commit.block.header.merkle_root =
+        merkle_root(duplicate_commit.block.transactions);
+    assert(validate_atomic_block_commit(duplicate_commit) ==
+           StoreCommitValidationError::InvalidTransaction);
 
     LedgerState wrong_root_state;
     wrong_root_state.accounts[alice] = AccountState{1000, 1};
