@@ -12,6 +12,8 @@ This directory contains the early C++20 implementation of an independent Layer-1
 - Domain-separated transaction IDs, block hashes, and binary Merkle-tree hashing.
 - Deterministic ledger transitions with balance, fee, nonce, replay, overflow, and atomic candidate-state checks.
 - Explicit verifier capability check; unknown authorization suites are rejected.
+- OpenSSL 3.5+ ML-DSA verifier for ML-DSA-44/65/87 with strict public-key and signature size checks.
+- Conditional real ML-DSA-65 key-generation, signing, verification, and ledger-authorization test when OpenSSL 3.5+ is available.
 - Structural block checks for height, parent linkage, timestamp bounds, transaction count, duplicates, and Merkle root.
 - Bounded P2P frame codec with protocol magic/version, typed messages, length checks, and a 2 MiB payload cap.
 - Unit tests for hashing, address derivation, key/address mismatch, suite rejection, ledger success/replay/chain/signature failures, recipient-overflow atomicity, block structure, and malformed P2P frames.
@@ -19,7 +21,7 @@ This directory contains the early C++20 implementation of an independent Layer-1
 
 ## Critical limitations
 
-This is **not a functioning blockchain or testnet**. No production signature implementation is integrated. Test suite ID 1 and its fake verifier exist only to exercise the interface; they are not cryptography and must never be accepted by a production node. No production ML-DSA suite ID has been assigned.
+This is **not a functioning blockchain or testnet**. The OpenSSL-backed ML-DSA verifier is implemented and exercised by a real ML-DSA-65 test when OpenSSL 3.5+ is available. The generic ledger unit tests also retain a fake suite-1 verifier strictly for state-transition testing; it is not cryptography and must never be accepted by a production node. The real ML-DSA test uses reserved test-only suite ID 0x7FFE. No production ML-DSA suite ID, activation rule, or wallet key-management workflow has been approved.
 
 Persistent storage, consensus/fork choice/finality, mining or validator selection, live P2P sockets/peer manager, wallet, RPC, state roots, genesis rules, and security audit are not implemented. Structural block validation does not yet execute transactions or verify block authorization/consensus. Do not use this prototype for funds or production.
 
@@ -31,7 +33,7 @@ See:
 
 ## Build
 
-Requirements: CMake 3.20+, a C++20 compiler, and OpenSSL 3.x development headers/libraries.
+Requirements: CMake 3.20+, a C++20 compiler, and OpenSSL 3.x development headers/libraries. Provider-backed ML-DSA support and its real-crypto test are enabled automatically when OpenSSL 3.5+ is found; older OpenSSL versions build the non-ML-DSA foundation only.
 
 ```sh
 cmake -S native -B native/build -DCMAKE_BUILD_TYPE=Release
