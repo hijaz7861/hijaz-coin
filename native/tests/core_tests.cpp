@@ -10,6 +10,7 @@
 #include <memory>
 #endif
 #include "hijaz/p2p_frame.hpp"
+#include "hijaz/storage.hpp"
 #include "hijaz/transaction.hpp"
 
 #include <cassert>
@@ -257,6 +258,7 @@ int main() {
     second_payment.amount = 60;
     second_payment.nonce = 2;
     execution_block.transactions = {first_payment, second_payment};
+    execution_block.header.merkle_root = merkle_root(execution_block.transactions);
     LedgerState expected_block_state = block_state;
     assert(ledger.apply(expected_block_state, first_payment, test_verifier) == ApplyResult::Applied);
     assert(ledger.apply(expected_block_state, second_payment, test_verifier) == ApplyResult::Applied);
@@ -270,6 +272,19 @@ int main() {
     assert(block_state.accounts.at(bob).balance == 50);
     assert(block_state.accounts.at(charlie).balance == 60);
     assert(ledger_state_root(block_state) == execution_block.header.state_root);
+    AtomicBlockCommit valid_commit;
+    valid_commit.expected_parent_hash = execution_block.header.previous_hash;
+    valid_commit.block = execution_block;
+    valid_commit.resulting_state = block_state;
+    assert(validate_atomic_block_commit(valid_commit) == StoreCommitValidationError::None);
+    auto bad_parent_commit = valid_commit;
+    bad_parent_commit.expected_parent_hash[0] ^= 0x01U;
+    assert(validate_atomic_block_commit(bad_parent_commit) ==
+           StoreCommitValidationError::ParentMismatch);
+    auto bad_state_commit = valid_commit;
+    bad_state_commit.resulting_state.accounts.at(alice).balance += 1;
+    assert(validate_atomic_block_commit(bad_state_commit) ==
+           StoreCommitValidationError::StateRootMismatch);
 
     LedgerState wrong_root_state;
     wrong_root_state.accounts[alice] = AccountState{1000, 1};
