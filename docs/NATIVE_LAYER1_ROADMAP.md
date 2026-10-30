@@ -17,7 +17,7 @@ Hijaz Coin (HJZ) is intended to become an independent native Layer-1 network. Th
 
 ## Current implementation checkpoint
 
-The `native/` directory currently contains only a small C++20 foundation: SHA3-256 via OpenSSL EVP, canonical transaction/header serialization, domain-separated identifiers and Merkle hashing, and basic unit tests. It is not a blockchain, consensus implementation, or testnet.
+The `native/` directory contains a C++20 prototype foundation: SHA3-256 via OpenSSL EVP, Transaction V3, provider-backed ML-DSA verification when OpenSSL 3.5+ is available, block header V2 with a deterministic state-root commitment, ordered all-or-nothing block execution, structural block validation, a bounded P2P frame codec, and unit tests. A vendor-neutral storage interface is present, but no durable storage backend, consensus implementation, live P2P node, or testnet exists.
 
 ## Release gates
 
