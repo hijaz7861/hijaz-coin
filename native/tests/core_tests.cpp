@@ -7,6 +7,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <limits>
 
 namespace {
 class AcceptForUnitTests final : public hijaz::SignatureVerifier {
@@ -90,6 +91,23 @@ int main() {
     assert(ledger.apply(state, payment, test_verifier) == ApplyResult::InvalidSignature);
     assert(state.accounts == before_replay.accounts);
 
+    // A recipient overflow must not debit the sender or advance its nonce.
+    LedgerState overflow_state;
+    overflow_state.accounts[alice] = AccountState{100, 1};
+    overflow_state.accounts[bob] = AccountState{std::numeric_limits<std::uint64_t>::max(), 1};
+    Transaction overflow_payment;
+    overflow_payment.chain_id = 7;
+    overflow_payment.sender = alice;
+    overflow_payment.receiver = bob;
+    overflow_payment.amount = 1;
+    overflow_payment.nonce = 1;
+    overflow_payment.signature = {0xA5};
+    const auto before_overflow = overflow_state;
+    assert(ledger.apply(overflow_state, overflow_payment, test_verifier) ==
+           ApplyResult::ArithmeticOverflow);
+    assert(overflow_state.accounts == before_overflow.accounts);
+    assert(overflow_state.accumulated_fees == before_overflow.accumulated_fees);
+
     Block candidate;
     candidate.header.height = 2;
     candidate.header.timestamp = 101;
@@ -101,6 +119,16 @@ int main() {
     candidate.header.height = 3;
     assert(validate_block_structure(candidate, 2, header.hash(), 100, 105) ==
            BlockStructureError::WrongHeight);
+    candidate.header.height = 2;
+    candidate.transactions = {payment, payment};
+    candidate.header.merkle_root = merkle_root(candidate.transactions);
+    assert(validate_block_structure(candidate, 2, header.hash(), 100, 105) ==
+           BlockStructureError::DuplicateTransaction);
+    candidate.transactions = {payment};
+    candidate.header.merkle_root = merkle_root(candidate.transactions);
+    candidate.header.timestamp = 100;
+    assert(validate_block_structure(candidate, 2, header.hash(), 100, 105) ==
+           BlockStructureError::InvalidTimestamp);
 
     const std::vector<std::uint8_t> ping_payload{0x10, 0x20, 0x30};
     const auto frame = p2p::encode_frame(p2p::MessageType::Ping, ping_payload);
@@ -111,6 +139,9 @@ int main() {
     auto corrupted = frame;
     corrupted[0] ^= 0xffU;
     assert(p2p::decode_frame(corrupted, decoded) == p2p::FrameError::BadMagic);
+    auto truncated = frame;
+    truncated.pop_back();
+    assert(p2p::decode_frame(truncated, decoded) == p2p::FrameError::LengthMismatch);
 
     std::cout << "HJZ native foundation and ledger tests: PASS\n";
 }
