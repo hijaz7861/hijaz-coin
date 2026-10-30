@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <map>
+#include <vector>
 
 namespace hijaz {
 
@@ -22,7 +23,8 @@ class SignatureVerifier {
 public:
     virtual ~SignatureVerifier() = default;
     [[nodiscard]] virtual bool verify(
-        const Hash256& public_key,
+        std::uint16_t authorization_suite,
+        const std::vector<std::uint8_t>& public_key,
         const std::vector<std::uint8_t>& message,
         const std::vector<std::uint8_t>& signature) const = 0;
 };
@@ -31,10 +33,12 @@ enum class ApplyResult {
     Applied,
     InvalidStructure,
     WrongChain,
+    SenderKeyMismatch,
     UnknownSender,
     BadNonce,
     InsufficientFunds,
     ArithmeticOverflow,
+    UnsupportedAuthorizationSuite,
     InvalidSignature
 };
 
