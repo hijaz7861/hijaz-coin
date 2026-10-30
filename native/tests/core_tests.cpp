@@ -103,10 +103,12 @@ int main() {
 
     payment.signature = {0xA5};
     payment.authorization_suite = 99;
+    payment.sender = derive_account_address(99, test_public_key);
     assert(ledger.apply(state, payment, test_verifier) == ApplyResult::UnsupportedAuthorizationSuite);
     assert(state.accounts == before_replay.accounts);
 
     payment.authorization_suite = 1;
+    payment.sender = alice;
     payment.sender[0] ^= 0x01U;
     assert(ledger.apply(state, payment, test_verifier) == ApplyResult::SenderKeyMismatch);
     assert(state.accounts == before_replay.accounts);
