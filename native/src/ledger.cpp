@@ -14,6 +14,8 @@ ApplyResult Ledger::apply(
     if (tx.chain_id != chain_id_) return ApplyResult::WrongChain;
     if (derive_account_address(tx.authorization_suite, tx.public_key) != tx.sender)
         return ApplyResult::SenderKeyMismatch;
+    if (!verifier.supports(tx.authorization_suite))
+        return ApplyResult::UnsupportedAuthorizationSuite;
 
     const auto sender_it = state.accounts.find(tx.sender);
     if (sender_it == state.accounts.end()) return ApplyResult::UnknownSender;
@@ -31,10 +33,9 @@ ApplyResult Ledger::apply(
     if (sender.next_nonce == std::numeric_limits<std::uint64_t>::max())
         return ApplyResult::ArithmeticOverflow;
 
-    // Suite support is determined by the configured verifier implementation.
     const auto payload = tx.signing_payload();
     if (!verifier.verify(tx.authorization_suite, tx.public_key, payload, tx.signature))
-        return ApplyResult::UnsupportedAuthorizationSuite;
+        return ApplyResult::InvalidSignature;
 
     LedgerState candidate = state;
     auto& candidate_sender = candidate.accounts.at(tx.sender);
