@@ -4,15 +4,17 @@ This directory begins a new, independent C++20 Layer-1 implementation. It is del
 
 ## Current scope
 
-- Canonical, fixed-width transaction and block-header serialization.
+- Canonical, versioned transaction and block-header serialization.
+- Chain-ID binding, integer amount/fee fields, and sequential account nonces.
 - SHA3-256 through OpenSSL EVP (not a custom cryptographic primitive).
 - Domain-separated transaction IDs, block hashes, and binary Merkle-tree hashing.
-- Integer-only amount representation.
-- A small executable test target.
+- Deterministic account-ledger state transition with balance, fee, nonce, overflow, and replay checks.
+- Atomic state application: a rejected transaction does not mutate the supplied state.
+- An injected signature-verification interface. Unit tests use a deliberately fake verifier only to test ledger behavior.
 
-## Explicitly not implemented yet
+## Explicit limitations
 
-This foundation is **not a functioning blockchain or testnet**. It does not yet implement signature verification, ML-DSA/ML-KEM, UTXO/account state, fees, replay protection, consensus, proof-of-work, fork choice, P2P networking, persistent storage, wallet, RPC, or peer privacy. Structural transaction checks are not authorization checks. Do not use it for funds or production.
+This is **not a functioning blockchain or testnet**. The ledger's signature interface has no production implementation. ML-DSA/ML-KEM, persistent storage, consensus, proof-of-work or validator selection, fork choice, P2P networking, wallet, RPC, and peer privacy are not implemented. The unit-test verifier is not cryptography. Do not use this code for funds or production.
 
 ## Build
 
@@ -31,4 +33,4 @@ ctest --test-dir native/build --output-on-failure
 - Serialization must be canonical and versioned.
 - Cryptographic algorithms must be standardized, reviewed, and replaceable through explicit protocol versioning; no home-grown signatures.
 - Node identity must be cryptographic and independent of MAC address, IMEI, or hardware serial numbers.
-- Consensus and monetary rules must be specified before mainnet implementation.
+- Monetary and consensus rules must be specified before mainnet implementation.
