@@ -17,7 +17,7 @@ StoreCommitValidationError validate_atomic_block_commit(
         if (!transaction.structurally_valid())
             return StoreCommitValidationError::InvalidTransaction;
         if (!transaction_ids.insert(to_hex(transaction.id())).second)
-            return StoreCommitValidationError::InvalidTransaction;
+            return StoreCommitValidationError::DuplicateTransaction;
     }
 
     if (merkle_root(commit.block.transactions) != commit.block.header.merkle_root)
