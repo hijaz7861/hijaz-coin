@@ -46,7 +46,7 @@ The C++ header `native/include/hijaz/storage.hpp` defines the abstract interface
 
 ## What is not implemented
 
-There is no RocksDB, SQLite, filesystem journal, in-memory production backend, crash recovery, schema migration, snapshot engine, reorganization/undo implementation, or transaction index implementation. The abstract interface alone does not provide durability and must not be described as persistent storage.
+There is no RocksDB, SQLite, filesystem journal, in-memory production backend, crash recovery, schema migration, snapshot engine, reorganization/undo implementation, or transaction index implementation. The abstract interface alone does not provide durability and must not be described as persistent storage. A pure validation helper now checks header version, expected-parent binding, transaction structural validity and uniqueness, transaction Merkle root, and resulting state root before an implementation writes. It still does not perform the database transaction or crash-safe commit.
 
 ## Next implementation gate
 
