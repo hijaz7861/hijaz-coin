@@ -22,6 +22,11 @@ BlockExecutionResult execute_block_transactions(
         }
     }
 
+    if (ledger_state_root(candidate) != block.header.state_root) {
+        return {BlockExecutionError::StateRootMismatch, block.transactions.size(),
+                ApplyResult::Applied};
+    }
+
     state = std::move(candidate);
     return {};
 }
