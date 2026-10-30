@@ -12,6 +12,8 @@ add_library(hijaz_core
     src/transaction.cpp
     src/block.cpp
     src/ledger.cpp
+    src/block_validation.cpp
+    src/p2p_frame.cpp
 )
 target_include_directories(hijaz_core PUBLIC include)
 target_link_libraries(hijaz_core PUBLIC OpenSSL::Crypto)
