@@ -85,6 +85,26 @@ int main() {
     using namespace hijaz;
 
     const std::vector<std::uint8_t> empty;
+    LedgerState empty_state;
+    const auto empty_root = ledger_state_root(empty_state);
+    assert(empty_root == ledger_state_root(empty_state));
+    LedgerState ordered_state_a;
+    Hash256 state_address_a{};
+    Hash256 state_address_b{};
+    state_address_a[0] = 0x01;
+    state_address_b[0] = 0x02;
+    ordered_state_a.accounts[state_address_b] = AccountState{200, 3};
+    ordered_state_a.accounts[state_address_a] = AccountState{100, 2};
+    LedgerState ordered_state_b;
+    ordered_state_b.accounts[state_address_a] = AccountState{100, 2};
+    ordered_state_b.accounts[state_address_b] = AccountState{200, 3};
+    assert(ledger_state_root(ordered_state_a) == ledger_state_root(ordered_state_b));
+    const auto committed_root = ledger_state_root(ordered_state_a);
+    ordered_state_b.accounts[state_address_a].balance += 1;
+    assert(ledger_state_root(ordered_state_b) != committed_root);
+    ordered_state_b = ordered_state_a;
+    ordered_state_b.accumulated_fees = 1;
+    assert(ledger_state_root(ordered_state_b) != committed_root);
     assert(to_hex(sha3_256(empty)) ==
         "a7ffc6f8bf1ed76651c14756a061d662f580ff4de43b49fa82d80a4b80f8434a");
 
@@ -233,6 +253,10 @@ int main() {
     second_payment.amount = 60;
     second_payment.nonce = 2;
     execution_block.transactions = {first_payment, second_payment};
+    LedgerState expected_block_state = block_state;
+    assert(ledger.apply(expected_block_state, first_payment, test_verifier) == ApplyResult::Applied);
+    assert(ledger.apply(expected_block_state, second_payment, test_verifier) == ApplyResult::Applied);
+    execution_block.header.state_root = ledger_state_root(expected_block_state);
 
     const auto block_result = execute_block_transactions(
         execution_block, block_state, ledger, test_verifier);
@@ -241,6 +265,17 @@ int main() {
     assert(block_state.accounts.at(alice).next_nonce == 3);
     assert(block_state.accounts.at(bob).balance == 50);
     assert(block_state.accounts.at(charlie).balance == 60);
+    assert(ledger_state_root(block_state) == execution_block.header.state_root);
+
+    LedgerState wrong_root_state;
+    wrong_root_state.accounts[alice] = AccountState{1000, 1};
+    const auto wrong_root_before = wrong_root_state;
+    execution_block.header.state_root[0] ^= 0x01U;
+    const auto wrong_root_result = execute_block_transactions(
+        execution_block, wrong_root_state, ledger, test_verifier);
+    assert(wrong_root_result.error == BlockExecutionError::StateRootMismatch);
+    assert(wrong_root_state.accounts == wrong_root_before.accounts);
+    execution_block.header.state_root = ledger_state_root(expected_block_state);
 
     LedgerState rejected_block_state;
     rejected_block_state.accounts[alice] = AccountState{1000, 1};
