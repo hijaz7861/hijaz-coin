@@ -290,7 +290,7 @@ int main() {
     duplicate_commit.block.header.merkle_root =
         merkle_root(duplicate_commit.block.transactions);
     assert(validate_atomic_block_commit(duplicate_commit) ==
-           StoreCommitValidationError::InvalidTransaction);
+           StoreCommitValidationError::DuplicateTransaction);
 
     LedgerState wrong_root_state;
     wrong_root_state.accounts[alice] = AccountState{1000, 1};
