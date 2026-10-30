@@ -17,9 +17,9 @@ This directory contains the early C++20 implementation of an independent Layer-1
 - OpenSSL 3.5+ ML-DSA verifier for ML-DSA-44/65/87 with strict public-key and signature size checks.
 - Conditional real ML-DSA-65 key-generation, signing, verification, and ledger-authorization test when OpenSSL 3.5+ is available.
 - Structural block checks for supported header version, height, parent linkage, timestamp bounds, transaction count, duplicates, and transaction Merkle root.
-- Vendor-neutral LedgerStore interface defining atomic canonical block publication, parent-tip conflict checks, canonical height lookups, block reads, and ledger-state reads.
+- Vendor-neutral LedgerStore interface and pre-commit validator checking header version, parent hash, transaction structure/uniqueness, transaction Merkle root, and resulting state root.
 - Bounded P2P frame codec with protocol magic/version, typed messages, length checks, and a 2 MiB payload cap.
-- Unit tests for hashing, address derivation, key/address mismatch, suite rejection, ledger success/replay/chain/signature failures, recipient-overflow atomicity, block structure, and malformed P2P frames.
+- Unit tests for hashing, deterministic state roots, address derivation, key/address mismatch, suite rejection, ledger success/replay/chain/signature failures, recipient-overflow atomicity, block structure/version, state-root enforcement, atomic block rollback, storage commit validation, and malformed P2P frames.
 - Test assertions remain enabled in Release builds.
 
 ## Critical limitations
@@ -32,6 +32,7 @@ See:
 - `docs/ADR-0002-PQC-ACCOUNT-IDENTITY.md`
 - `docs/ADR-0003-DURABLE-LEDGER-STORAGE.md`
 - `docs/ADR-0007-DETERMINISTIC-STATE-ROOT.md`
+- `docs/ADR-0008-LEDGER-STORE-INTERFACE.md`
 - `docs/ADR-0008-LEDGER-STORE-INTERFACE.md`
 - `docs/ADR-0004-TRANSACTION-V3-WIRE-FORMAT.md`
 - `docs/PROTOCOL_DECISIONS.md`
