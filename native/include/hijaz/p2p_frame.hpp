@@ -9,7 +9,7 @@ namespace hijaz::p2p {
 
 inline constexpr std::uint32_t protocol_magic = 0x484A5A31U; // "HJZ1"
 inline constexpr std::uint32_t protocol_version = 1;
-inline constexpr std::size_t frame_header_size = 10;
+inline constexpr std::size_t frame_header_size = 14;
 inline constexpr std::size_t max_payload_size = 2U * 1024U * 1024U;
 
 enum class MessageType : std::uint16_t {
