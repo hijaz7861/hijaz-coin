@@ -225,5 +225,40 @@ int main() {
     truncated.pop_back();
     assert(p2p::decode_frame(truncated, decoded) == p2p::FrameError::LengthMismatch);
 
+#ifdef HJZ_HAS_OPENSSL_ML_DSA
+    // Real FIPS 204 ML-DSA-65 key generation, signing, import, and verification.
+    // 0x7FFE is a test-only suite ID; it is not a production protocol assignment.
+    constexpr std::uint16_t ml_dsa_test_suite = 0x7FFE;
+    auto ml_dsa_key = generate_ml_dsa65_key();
+    OpenSslMlDsaVerifier ml_dsa_verifier(ml_dsa_test_suite, "ML-DSA-65");
+
+    Transaction pq_payment;
+    pq_payment.authorization_suite = ml_dsa_test_suite;
+    pq_payment.public_key = ml_dsa_key.public_key;
+    pq_payment.chain_id = 77;
+    pq_payment.sender = derive_account_address(ml_dsa_test_suite, ml_dsa_key.public_key);
+    pq_payment.receiver = derive_account_address(
+        ml_dsa_test_suite, std::vector<std::uint8_t>{0x44, 0x55});
+    pq_payment.amount = 17;
+    pq_payment.fee = 1;
+    pq_payment.nonce = 1;
+    pq_payment.signature = sign_ml_dsa65(
+        ml_dsa_key.key.get(), pq_payment.signing_payload());
+
+    Ledger pq_ledger(77);
+    LedgerState pq_state;
+    pq_state.accounts[pq_payment.sender] = AccountState{100, 1};
+    assert(pq_ledger.apply(pq_state, pq_payment, ml_dsa_verifier) == ApplyResult::Applied);
+    assert(pq_state.accounts.at(pq_payment.sender).balance == 82);
+    assert(pq_state.accounts.at(pq_payment.receiver).balance == 17);
+
+    const auto pq_before_invalid = pq_state;
+    pq_payment.nonce = 2;
+    pq_payment.signature[0] ^= 0x01U;
+    assert(pq_ledger.apply(pq_state, pq_payment, ml_dsa_verifier) ==
+           ApplyResult::InvalidSignature);
+    assert(pq_state.accounts == pq_before_invalid.accounts);
+#endif
+
     std::cout << "HJZ native foundation and ledger tests: PASS\n";
 }
