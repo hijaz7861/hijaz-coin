@@ -12,9 +12,13 @@
 namespace {
 class AcceptForUnitTests final : public hijaz::SignatureVerifier {
 public:
-    bool verify(const hijaz::Hash256&, const std::vector<std::uint8_t>&,
+    bool supports(std::uint16_t suite) const noexcept override { return suite == 1; }
+
+    bool verify(std::uint16_t suite, const std::vector<std::uint8_t>& public_key,
+                const std::vector<std::uint8_t>&,
                 const std::vector<std::uint8_t>& signature) const override {
-        return signature == std::vector<std::uint8_t>{0xA5};
+        return suite == 1 && public_key == std::vector<std::uint8_t>{0x01, 0x02} &&
+               signature == std::vector<std::uint8_t>{0xA5};
     }
 };
 }
@@ -26,10 +30,18 @@ int main() {
     assert(to_hex(sha3_256(empty)) ==
         "a7ffc6f8bf1ed76651c14756a061d662f580ff4de43b49fa82d80a4b80f8434a");
 
+    const std::vector<std::uint8_t> test_public_key{0x01, 0x02};
+    const auto alice = derive_account_address(1, test_public_key);
+    const auto bob = derive_account_address(1, std::vector<std::uint8_t>{0x03, 0x04});
+    assert(alice != bob);
+    assert(alice != derive_account_address(2, test_public_key));
+
     Transaction tx;
+    tx.authorization_suite = 1;
+    tx.public_key = test_public_key;
     tx.chain_id = 7;
-    tx.sender[0] = 1;
-    tx.receiver[0] = 2;
+    tx.sender = alice;
+    tx.receiver = bob;
     tx.amount = 100;
     tx.fee = 3;
     tx.nonce = 7;
@@ -55,13 +67,11 @@ int main() {
     AcceptForUnitTests test_verifier;
     Ledger ledger(7);
     LedgerState state;
-    Hash256 alice{};
-    Hash256 bob{};
-    alice[0] = 1;
-    bob[0] = 2;
     state.accounts[alice] = AccountState{1000, 1};
 
     Transaction payment;
+    payment.authorization_suite = 1;
+    payment.public_key = test_public_key;
     payment.chain_id = 7;
     payment.sender = alice;
     payment.receiver = bob;
@@ -91,11 +101,24 @@ int main() {
     assert(ledger.apply(state, payment, test_verifier) == ApplyResult::InvalidSignature);
     assert(state.accounts == before_replay.accounts);
 
+    payment.signature = {0xA5};
+    payment.authorization_suite = 99;
+    assert(ledger.apply(state, payment, test_verifier) == ApplyResult::UnsupportedAuthorizationSuite);
+    assert(state.accounts == before_replay.accounts);
+
+    payment.authorization_suite = 1;
+    payment.sender[0] ^= 0x01U;
+    assert(ledger.apply(state, payment, test_verifier) == ApplyResult::SenderKeyMismatch);
+    assert(state.accounts == before_replay.accounts);
+    payment.sender = alice;
+
     // A recipient overflow must not debit the sender or advance its nonce.
     LedgerState overflow_state;
     overflow_state.accounts[alice] = AccountState{100, 1};
     overflow_state.accounts[bob] = AccountState{std::numeric_limits<std::uint64_t>::max(), 1};
     Transaction overflow_payment;
+    overflow_payment.authorization_suite = 1;
+    overflow_payment.public_key = test_public_key;
     overflow_payment.chain_id = 7;
     overflow_payment.sender = alice;
     overflow_payment.receiver = bob;
