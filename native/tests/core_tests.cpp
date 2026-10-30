@@ -333,6 +333,9 @@ int main() {
 
     const std::vector<std::uint8_t> ping_payload{0x10, 0x20, 0x30};
     const auto frame = p2p::encode_frame(p2p::MessageType::Ping, ping_payload);
+    assert(!p2p::encode_frame(static_cast<p2p::MessageType>(0xFFFF), ping_payload).size());
+    const std::vector<std::uint8_t> oversized_payload(p2p::max_payload_size + 1U, 0xAA);
+    assert(p2p::encode_frame(p2p::MessageType::Ping, oversized_payload).empty());
     p2p::Frame decoded{p2p::MessageType::Reject, {}};
     assert(p2p::decode_frame(frame, decoded) == p2p::FrameError::None);
     assert(decoded.type == p2p::MessageType::Ping);
