@@ -1,4 +1,5 @@
 #include "hijaz/block.hpp"
+#include "hijaz/block_execution.hpp"
 #include "hijaz/block_validation.hpp"
 #include "hijaz/hash.hpp"
 #include "hijaz/ledger.hpp"
@@ -211,6 +212,48 @@ int main() {
     candidate.header.timestamp = 100;
     assert(validate_block_structure(candidate, 2, header.hash(), 100, 105) ==
            BlockStructureError::InvalidTimestamp);
+
+    // Block execution is atomic across the full transaction list.
+    Hash256 charlie{};
+    charlie[0] = 3;
+    LedgerState block_state;
+    block_state.accounts[alice] = AccountState{1000, 1};
+    Block execution_block;
+    Transaction first_payment;
+    first_payment.authorization_suite = 1;
+    first_payment.public_key = test_public_key;
+    first_payment.chain_id = 7;
+    first_payment.sender = alice;
+    first_payment.receiver = bob;
+    first_payment.amount = 50;
+    first_payment.nonce = 1;
+    first_payment.signature = {0xA5};
+    Transaction second_payment = first_payment;
+    second_payment.receiver = charlie;
+    second_payment.amount = 60;
+    second_payment.nonce = 2;
+    execution_block.transactions = {first_payment, second_payment};
+
+    const auto block_result = execute_block_transactions(
+        execution_block, block_state, ledger, test_verifier);
+    assert(block_result.error == BlockExecutionError::None);
+    assert(block_state.accounts.at(alice).balance == 890);
+    assert(block_state.accounts.at(alice).next_nonce == 3);
+    assert(block_state.accounts.at(bob).balance == 50);
+    assert(block_state.accounts.at(charlie).balance == 60);
+
+    LedgerState rejected_block_state;
+    rejected_block_state.accounts[alice] = AccountState{1000, 1};
+    second_payment.signature = {0x00};
+    execution_block.transactions = {first_payment, second_payment};
+    const auto rejected_before = rejected_block_state;
+    const auto rejected_result = execute_block_transactions(
+        execution_block, rejected_block_state, ledger, test_verifier);
+    assert(rejected_result.error == BlockExecutionError::TransactionRejected);
+    assert(rejected_result.failed_transaction_index == 1);
+    assert(rejected_result.transaction_result == ApplyResult::InvalidSignature);
+    assert(rejected_block_state.accounts == rejected_before.accounts);
+    assert(rejected_block_state.accumulated_fees == rejected_before.accumulated_fees);
 
     const std::vector<std::uint8_t> ping_payload{0x10, 0x20, 0x30};
     const auto frame = p2p::encode_frame(p2p::MessageType::Ping, ping_payload);
