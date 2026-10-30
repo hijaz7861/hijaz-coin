@@ -15,6 +15,7 @@ struct Block {
 
 enum class BlockStructureError {
     None,
+    UnsupportedVersion,
     WrongHeight,
     WrongParent,
     InvalidTimestamp,
@@ -25,6 +26,7 @@ enum class BlockStructureError {
 };
 
 struct BlockValidationLimits {
+    std::uint32_t supported_header_version{2};
     std::size_t max_transactions{4096};
     std::uint64_t max_future_drift_seconds{120};
 };
