@@ -9,7 +9,8 @@ namespace hijaz {
 
 enum class BlockExecutionError {
     None,
-    TransactionRejected
+    TransactionRejected,
+    StateRootMismatch
 };
 
 struct BlockExecutionResult {
