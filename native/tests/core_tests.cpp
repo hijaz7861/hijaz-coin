@@ -1,6 +1,8 @@
 #include "hijaz/block.hpp"
+#include "hijaz/block_validation.hpp"
 #include "hijaz/hash.hpp"
 #include "hijaz/ledger.hpp"
+#include "hijaz/p2p_frame.hpp"
 #include "hijaz/transaction.hpp"
 
 #include <cassert>
