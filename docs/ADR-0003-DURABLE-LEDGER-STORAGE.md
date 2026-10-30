@@ -9,7 +9,7 @@ The native node needs deterministic, crash-safe persistence for accepted blocks,
 
 ## Storage boundary
 
-Keep consensus logic independent of the database vendor. Introduce a storage interface with operations equivalent to:
+Keep consensus logic independent of the database vendor. The prototype now defines `native/include/hijaz/storage.hpp` with a vendor-neutral `LedgerStore` interface, plus a pre-commit validator for parent linkage, transaction structure/uniqueness, transaction Merkle root, and resulting state root. The interface is not a durable backend. Its required operations are:
 
 - Read the current canonical tip and finalized checkpoint.
 - Read a block by hash and canonical block hash by height.
