@@ -13,7 +13,8 @@ Status: engineering draft; not a mainnet specification.
 - Transaction signing payload and transaction ID use distinct domain separation.
 - Account-state prototype uses sequential nonces and explicit fee accounting.
 - Ledger application is atomic: invalid transactions leave state unchanged.
-- Signature verification is injected; suite 1 is test-only and uses a fake verifier.
+- Signature verification is injected through a suite-aware interface; the generic fake suite 1 is test-only.
+- An OpenSSL 3.5+ backend implements FIPS 204 ML-DSA-44/65/87 verification; the real ML-DSA-65 integration test uses reserved test-only suite 0x7FFE. No production suite ID is assigned.
 - Hashing uses SHA3-256 via OpenSSL EVP.
 
 ## Open parameters — do not silently assume
