@@ -22,6 +22,7 @@ struct LedgerState {
 class SignatureVerifier {
 public:
     virtual ~SignatureVerifier() = default;
+    [[nodiscard]] virtual bool supports(std::uint16_t authorization_suite) const noexcept = 0;
     [[nodiscard]] virtual bool verify(
         std::uint16_t authorization_suite,
         const std::vector<std::uint8_t>& public_key,
