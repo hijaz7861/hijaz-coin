@@ -11,6 +11,7 @@ This directory contains the early C++20 implementation of an independent Layer-1
 - SHA3-256 through OpenSSL EVP.
 - Domain-separated transaction IDs, block hashes, and binary Merkle-tree hashing.
 - Deterministic ledger transitions with balance, fee, nonce, replay, overflow, and atomic candidate-state checks.
+- Block transaction executor applies transactions in canonical block order and commits the resulting ledger state only if every transaction succeeds; a rejected transaction leaves the original block state untouched.
 - Explicit verifier capability check; unknown authorization suites are rejected.
 - OpenSSL 3.5+ ML-DSA verifier for ML-DSA-44/65/87 with strict public-key and signature size checks.
 - Conditional real ML-DSA-65 key-generation, signing, verification, and ledger-authorization test when OpenSSL 3.5+ is available.
