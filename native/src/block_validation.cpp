@@ -1,5 +1,6 @@
 #include "hijaz/block_validation.hpp"
 
+#include <limits>
 #include <set>
 #include <string>
 
@@ -17,7 +18,7 @@ BlockStructureError validate_block_structure(
         return BlockStructureError::WrongHeight;
     if (block.header.previous_hash != expected_parent)
         return BlockStructureError::WrongParent;
-    const auto latest_allowed = adjusted_network_time > UINT64_MAX - limits.max_future_drift_seconds
+    const auto latest_allowed = adjusted_network_time > std::numeric_limits<std::uint64_t>::max() - limits.max_future_drift_seconds
         ? UINT64_MAX : adjusted_network_time + limits.max_future_drift_seconds;
     if (block.header.timestamp <= parent_timestamp ||
         block.header.timestamp > latest_allowed)
