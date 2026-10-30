@@ -19,7 +19,7 @@ Hijaz Coin (HJZ) is intended to become an independent native Layer-1 network. Th
 
 The `native/` directory contains a C++20 prototype foundation: SHA3-256 via OpenSSL EVP, Transaction V3, provider-backed ML-DSA verification when OpenSSL 3.5+ is available, block header V2 with a deterministic state-root commitment, ordered all-or-nothing block execution, structural block validation, a bounded P2P frame codec, and unit tests. A vendor-neutral storage interface is present, but no durable storage backend, consensus implementation, live P2P node, or testnet exists.
 
-ADR-0010 selects SQLite as the first durable-storage implementation candidate, subject to actual implementation, crash/recovery testing, and Linux ARM64 validation. This is a direction decision, not completed storage.
+ADR-0010 selects SQLite as the first durable-storage implementation candidate, subject to actual implementation, crash/recovery testing, and Linux ARM64 validation. ADR-0011 requires the store to replay transactions from its own persisted parent state with a production signature verifier; merely comparing a caller-supplied state root is not sufficient. These are architecture decisions, not completed storage.
 
 ## Release gates
 
