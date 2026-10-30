@@ -1,70 +1,69 @@
 # ADR-0002: Post-Quantum Account Identity and Transaction Authorization
 
-Status: proposed protocol decision; implementation required before production signatures.
+Status: partially implemented prototype; production cryptography and suite selection remain open.
 Date: 2026-10-30
 
 ## Context
 
-The current transaction prototype stores `sender` as a 32-byte `Hash256` and passes that value to the injected `SignatureVerifier` as though it were a public key. This is only a test abstraction. It cannot represent standardized ML-DSA public keys, and it does not define how a public key is bound to an account address.
+The initial transaction prototype treated a 32-byte sender hash as if it were a public key. That cannot represent ML-DSA public keys and did not bind an account identifier to the key authorizing a spend.
 
-A production transaction format must make authorization deterministic, unambiguous, versioned, and independently verifiable by every node.
+## Implemented prototype model
 
-## Proposed identity model
+The current Transaction V3 structure carries:
+- a one-byte format version (currently 3),
+- a two-byte authorization-suite identifier,
+- bounded canonical public-key bytes,
+- a 32-byte sender account address,
+- chain ID, receiver, amount, fee, nonce, and signature bytes.
 
-1. An account address is a 32-byte identifier, not a public key.
-2. A transaction carries an explicit authorization-suite identifier and the canonical public-key bytes needed to verify that transaction.
-3. The sender address is derived from the authorization suite and canonical public key using a domain-separated hash, conceptually:
+The sender address is derived from the suite identifier and public key using the domain-separated SHA3-256 helper:
 
-   `address = H("HJZ/ADDRESS/V1" || suite_id || canonical_public_key)`
+`address = domain_hash("HJZ/ADDRESS/V1", u16_be(suite_id) || canonical_public_key)`
 
-4. A validator rejects a transaction if the derived address does not equal its declared sender address.
-5. Public-key encoding, suite identifiers, address derivation, and signature encoding are consensus-critical protocol rules. They must have exact byte-level specifications and test vectors before activation.
-6. A transaction signing payload includes the chain ID, transaction format version, authorization-suite identifier, sender and receiver addresses, amount, fee, nonce, and any other consensus-critical transaction fields. It excludes the signature itself.
-7. The transaction identifier commits to the complete canonical transaction, including authorization metadata, public key, and signature. Domain separation is mandatory.
-8. Unknown or disabled suite identifiers are rejected; nodes must not silently downgrade to another algorithm.
+The ledger recomputes this address and rejects a mismatch before authorization or state mutation. Public-key bytes and signatures are each bounded to 16 KiB in this prototype. The exact byte-level format is specified in ADR-0004.
+
+The `SignatureVerifier` interface now receives the suite identifier and full public-key bytes. It must explicitly report whether it supports a suite; unsupported suites are rejected. Unit tests use suite 1 with a deliberately fake verifier. **Suite 1 is test-only and is not a registered production cryptographic suite.**
 
 ## Post-quantum algorithm policy
 
 - Evaluate NIST FIPS 204 ML-DSA for transaction signatures.
-- Evaluate NIST FIPS 203 ML-KEM only if/when the peer transport requires post-quantum key establishment. ML-KEM is not a transaction-signature algorithm.
-- Keep suite identifiers and serialization versioned so algorithm migration can be specified without ambiguous interpretation.
-- Use a maintained, independently reviewed cryptographic implementation. Do not implement lattice cryptography in project code.
-- Select the exact ML-DSA parameter set only after benchmarking, implementation availability review, threat modelling, and a documented protocol decision.
+- Evaluate NIST FIPS 203 ML-KEM only if/when peer transport requires post-quantum key establishment. ML-KEM is not a transaction-signature algorithm.
+- Do not implement lattice cryptography in project code.
+- Select an exact ML-DSA parameter set and assign a production suite ID only after reviewing maintained library support, canonical encodings, benchmarks, interoperability vectors, and threat model.
+- Keep algorithm identifiers explicit and reject unknown/disabled suites without downgrade.
 - Do not describe any scheme as unbreakable or permanently quantum-proof.
 
 ## Key lifecycle
 
-The protocol specification must define account recovery, key rotation, multi-key authorization, and the effect of compromised keys before mainnet. Rotation must itself be authorized by the currently valid account policy or by an explicitly specified recovery mechanism. There is no implicit administrator override.
+Before mainnet, specify key rotation, recovery, multi-key authorization, compromised-key handling, and whether account policy can change authorization suites. There is no implicit administrator override.
 
-## Transaction validation order
+## Validation order
 
-A production validator should, in a deterministic order:
-
-1. Check transaction format and bounded field lengths.
-2. Check chain ID and supported authorization-suite identifier.
-3. Parse the canonical public key for that suite.
-4. Derive the sender address and compare it to the declared sender.
+1. Check format version and bounded field lengths.
+2. Check chain ID.
+3. Recompute sender address from suite ID and canonical public key; reject mismatch.
+4. Check whether the configured verifier supports the suite.
 5. Reconstruct the exact canonical signing payload.
-6. Verify the signature using the selected standardized implementation.
+6. Verify signature using the standardized implementation.
 7. Apply nonce, balance, fee, replay, and state-transition rules atomically.
 
-Every failure must leave candidate state unchanged.
+All failures must leave ledger state unchanged.
 
-## Compatibility and migration
+## Compatibility
 
-The current `Hash256 sender + signature bytes` structure is a prototype and must not be treated as a production wire format. Before introducing production PQC verification, introduce a new transaction format version containing the suite identifier and public-key bytes. Do not reinterpret old serialized bytes in place. Legacy prototype transactions must be rejected by a production network unless an explicit, separately reviewed migration rule is adopted.
+Transaction V3 is a new prototype format. Do not reinterpret V2 serialized bytes as V3. Legacy prototype transactions must be rejected by a production network unless an explicit migration rule is separately reviewed and adopted.
 
-## Required tests
+## Required production tests
 
-- Known-answer address derivation vectors for each enabled suite.
-- Valid and invalid signature vectors from the chosen cryptographic library.
+- Published known-answer address derivation vectors for each enabled suite.
+- Standard valid/invalid signature vectors from the chosen cryptographic implementation.
 - Wrong-key / sender-address mismatch rejection.
 - Chain-ID and transaction-domain separation tests.
 - Truncated, oversized, malformed, and non-canonical public-key rejection.
 - Unknown-suite and downgrade rejection.
-- Signature mutation and signing-payload mutation rejection.
-- Atomic-state tests proving all authorization failures leave balances and nonces unchanged.
+- Signature and signing-payload mutation rejection.
+- Atomic-state tests proving authorization failures do not mutate balances or nonces.
 
 ## Decision gate
 
-This ADR is a design constraint, not a claim that PQC is implemented. No mainnet or incentivized public testnet should launch until the exact suite, canonical encodings, key lifecycle, cryptographic library, audit plan, and protocol test vectors are approved and implemented.
+This ADR does not claim production PQC is implemented. No public testnet with meaningful incentives or mainnet should launch until the exact suite, canonical encodings, key lifecycle, library, interoperability vectors, audit plan, and migration policy are implemented and reviewed.
