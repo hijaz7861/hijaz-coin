@@ -14,6 +14,8 @@ BlockStructureError validate_block_structure(
     std::uint64_t adjusted_network_time,
     const BlockValidationLimits& limits) {
 
+    if (block.header.version != limits.supported_header_version)
+        return BlockStructureError::UnsupportedVersion;
     if (block.header.height != expected_height)
         return BlockStructureError::WrongHeight;
     if (block.header.previous_hash != expected_parent)
