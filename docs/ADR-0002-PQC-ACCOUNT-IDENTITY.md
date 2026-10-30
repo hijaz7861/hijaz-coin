@@ -22,7 +22,7 @@ The sender address is derived from the suite identifier and public key using the
 
 The ledger recomputes this address and rejects a mismatch before authorization or state mutation. Public-key bytes and signatures are each bounded to 16 KiB in this prototype. The exact byte-level format is specified in ADR-0004.
 
-The `SignatureVerifier` interface now receives the suite identifier and full public-key bytes. It must explicitly report whether it supports a suite; unsupported suites are rejected. Unit tests use suite 1 with a deliberately fake verifier. **Suite 1 is test-only and is not a registered production cryptographic suite.**
+The `SignatureVerifier` interface now receives the suite identifier and full public-key bytes. It must explicitly report whether it supports a suite; unsupported suites are rejected. An OpenSSL 3.5+ provider-backed verifier now supports the standardized ML-DSA-44, ML-DSA-65, and ML-DSA-87 parameter sets. Tests generate a real ML-DSA-65 keypair, sign a transaction payload, import the raw public key, and verify the transaction through the ledger. The real-crypto test uses suite ID `0x7FFE`, which is test-only and is not a registered production suite. The older fake suite-1 verifier remains only for generic ledger state-transition tests.
 
 ## Post-quantum algorithm policy
 
