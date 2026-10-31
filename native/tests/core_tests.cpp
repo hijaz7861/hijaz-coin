@@ -127,6 +127,46 @@ int main() {
     tx.signature = {0x01, 0x02, 0x03};
     assert(tx.structurally_valid());
 
+    // Canonical Transaction V3 decoder: round-trip, strict bounds, and
+    // failure must not mutate the caller's previously valid output.
+    const auto tx_wire = tx.canonical_bytes();
+    Transaction decoded_tx;
+    assert(decode_transaction(tx_wire, decoded_tx) == TransactionDecodeError::None);
+    assert(decoded_tx.canonical_bytes() == tx_wire);
+    assert(decoded_tx.id() == tx.id());
+    auto truncated_tx_wire = tx_wire;
+    truncated_tx_wire.pop_back();
+    const auto preserved_decoded_id = decoded_tx.id();
+    assert(decode_transaction(truncated_tx_wire, decoded_tx) ==
+           TransactionDecodeError::TooShort);
+    assert(decoded_tx.id() == preserved_decoded_id);
+    auto trailing_tx_wire = tx_wire;
+    trailing_tx_wire.push_back(0x00);
+    assert(decode_transaction(trailing_tx_wire, decoded_tx) ==
+           TransactionDecodeError::NonCanonical);
+    assert(decoded_tx.id() == preserved_decoded_id);
+    auto wrong_domain_tx_wire = tx_wire;
+    wrong_domain_tx_wire[0] ^= 0x01U;
+    assert(decode_transaction(wrong_domain_tx_wire, decoded_tx) ==
+           TransactionDecodeError::InvalidDomain);
+    auto wrong_version_tx_wire = tx_wire;
+    wrong_version_tx_wire[5] = 0x02;
+    assert(decode_transaction(wrong_version_tx_wire, decoded_tx) ==
+           TransactionDecodeError::UnsupportedVersion);
+    auto zero_suite_tx_wire = tx_wire;
+    zero_suite_tx_wire[6] = 0;
+    zero_suite_tx_wire[7] = 0;
+    assert(decode_transaction(zero_suite_tx_wire, decoded_tx) ==
+           TransactionDecodeError::InvalidSuite);
+    auto oversized_key_tx_wire = tx_wire;
+    oversized_key_tx_wire[10] = 0;
+    oversized_key_tx_wire[11] = 0;
+    oversized_key_tx_wire[12] = 0x40;
+    oversized_key_tx_wire[13] = 0x01;
+    assert(decode_transaction(oversized_key_tx_wire, decoded_tx) ==
+           TransactionDecodeError::InvalidLength);
+    assert(decoded_tx.id() == preserved_decoded_id);
+
     const auto first_id = tx.id();
     tx.signature.push_back(0x04);
     assert(tx.id() != first_id);
