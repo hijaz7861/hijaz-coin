@@ -82,4 +82,19 @@ Before a durable store or P2P message handler accepts serialized transactions, t
 
 Required tests include every truncation boundary, zero and maximum lengths, maximum-plus-one lengths, uint32/uint64 boundary values, trailing bytes, altered domain/version, malformed field combinations, round-trip vectors, and failure-with-output-unchanged behavior. Fuzz the decoder with sanitizers before exposing it to untrusted input.
 
-A separate block wire-format decision is also required before block persistence or network decoding. The current `BlockHeader::canonical_bytes()` serializes only the header; it is not a complete block encoding and does not define transaction-count or per-transaction framing. Do not invent an implicit block container format in storage code.
+## Block container codec (prototype)
+
+The repository now defines a separate bounded block container in `native/include/hijaz/block_wire.hpp` and `native/src/block_wire.cpp`:
+
+| Field | Encoding |
+|---|---|
+| Container domain | ASCII `HJZB` |
+| Container version | u8; currently 1 |
+| Block header | fixed 124-byte Block Header V2 canonical fields |
+| Transaction count | u32 big-endian; maximum 4096 |
+| Transactions | repeated u32 big-endian byte length + canonical Transaction V3 bytes |
+| Total container | maximum 16 MiB |
+
+The decoder rejects unsupported container/header versions, invalid counts, truncated or zero-length transaction frames, invalid Transaction V3 payloads, oversized containers, and trailing bytes. It parses into a temporary object and only replaces the caller's output after canonical re-encoding matches the exact input.
+
+Regression tests cover round-trip, truncation, trailing bytes, invalid domain/version, excessive transaction count, and output preservation. This codec is implemented at source level but has not yet been compiled, fuzzed, or independently reviewed. It is not a frozen consensus/network protocol.
