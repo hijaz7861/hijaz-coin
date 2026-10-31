@@ -19,6 +19,7 @@ add_library(hijaz_core
     src/hash.cpp
     src/transaction.cpp
     src/block.cpp
+    src/block_wire.cpp
     src/ledger.cpp
     src/block_validation.cpp
     src/block_execution.cpp
