@@ -61,3 +61,25 @@ The transaction ID is:
 ## Activation gate
 
 This ADR documents current prototype behavior only. A production network must separately approve the cryptographic suite, public-key canonical encoding, signature encoding, resource limits, transaction activation/version policy, and interoperability test vectors.
+
+
+## Decoder implementation gate
+
+The current prototype implements canonical encoding and hashing only. It does **not** yet provide a canonical byte-to-Transaction decoder. Therefore, the format must not be treated as a complete network/storage interchange implementation.
+
+Before a durable store or P2P message handler accepts serialized transactions, an independently tested decoder must:
+
+- Parse from a bounded byte span; never allocate based solely on an untrusted length field.
+- Require the exact five-byte domain marker and format version.
+- Read all fixed-width integers in big-endian order and reject truncated fields.
+- Check public-key and signature lengths against the 1..16384 byte bounds before copying or allocating.
+- Check every length conversion and offset addition for overflow and remaining-input bounds.
+- Require the exact canonical field order and reject trailing bytes.
+- Reject empty/invalid fields and run structural validation after parsing.
+- Re-encode the parsed object and require byte-for-byte equality with the input as a canonicality invariant.
+- Leave the caller's output object unchanged on every parse failure.
+- Return typed parse errors that distinguish truncation, invalid domain/version, invalid length, overflow, non-canonical encoding, and structural invalidity.
+
+Required tests include every truncation boundary, zero and maximum lengths, maximum-plus-one lengths, uint32/uint64 boundary values, trailing bytes, altered domain/version, malformed field combinations, round-trip vectors, and failure-with-output-unchanged behavior. Fuzz the decoder with sanitizers before exposing it to untrusted input.
+
+A separate block wire-format decision is also required before block persistence or network decoding. The current `BlockHeader::canonical_bytes()` serializes only the header; it is not a complete block encoding and does not define transaction-count or per-transaction framing. Do not invent an implicit block container format in storage code.
