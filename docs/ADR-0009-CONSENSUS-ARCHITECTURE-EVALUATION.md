@@ -40,6 +40,12 @@ Consensus selection is a protocol-level decision. It affects Sybil resistance, n
 7. Economic attack analysis and simulation under adversarial participation.
 8. Test vectors and multi-node adversarial simulations.
 
+## Updated project direction (2026-10-31)
+
+The requested mining behavior establishes Bitcoin-like adaptive PoW as the preferred candidate for deeper design evaluation. ADR-0014 records the proposed retarget, timestamp, proof-target, cumulative-chain-work, threat-analysis, and test requirements.
+
+This preference does NOT supersede the consensus-selection gate below. PoW is not yet adopted, and no consensus-critical parameter is approved. A separate final consensus ADR must follow parameter analysis, attack simulations, and explicit review. Until then, no mining or canonical-chain authorization may be represented as implemented.
+
 ## Decision
 
 No consensus mechanism or parameters are selected in this ADR. No block production, mining, validator rewards, token issuance, total supply, validator eligibility, or finality claims may be implemented as if already approved.
