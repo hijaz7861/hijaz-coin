@@ -465,5 +465,42 @@ int main() {
     assert(pq_state.accounts == pq_before_invalid.accounts);
 #endif
 
+    // Canonical bounded block-container wire format regression tests.
+    Block wire_block;
+    wire_block.header.version = 2;
+    wire_block.header.height = 9;
+    wire_block.header.timestamp = 1234;
+    wire_block.header.merkle_root = merkle_root({tx});
+    wire_block.header.state_root = ledger_state_root(empty_state);
+    wire_block.transactions = {tx};
+    const auto block_wire = encode_block(wire_block);
+    assert(!block_wire.empty());
+    Block decoded_block;
+    assert(decode_block(block_wire, decoded_block) == BlockDecodeError::None);
+    assert(encode_block(decoded_block) == block_wire);
+    assert(decoded_block.transactions.size() == 1U);
+    const auto preserved_block_hash = decoded_block.header.hash();
+    auto short_block_wire = block_wire;
+    short_block_wire.pop_back();
+    assert(decode_block(short_block_wire, decoded_block) == BlockDecodeError::InvalidLength);
+    assert(decoded_block.header.hash() == preserved_block_hash);
+    auto trailing_block_wire = block_wire;
+    trailing_block_wire.push_back(0U);
+    assert(decode_block(trailing_block_wire, decoded_block) == BlockDecodeError::NonCanonical);
+    auto wrong_block_magic = block_wire;
+    wrong_block_magic[0] ^= 1U;
+    assert(decode_block(wrong_block_magic, decoded_block) == BlockDecodeError::InvalidDomain);
+    auto wrong_container_version = block_wire;
+    wrong_container_version[4] = 2U;
+    assert(decode_block(wrong_container_version, decoded_block) == BlockDecodeError::UnsupportedVersion);
+    auto too_many_block_txs = block_wire;
+    const std::size_t tx_count_offset = 5U + 4U + 8U + 8U + 32U + 32U + 32U + 8U;
+    too_many_block_txs[tx_count_offset] = 0U;
+    too_many_block_txs[tx_count_offset + 1U] = 0U;
+    too_many_block_txs[tx_count_offset + 2U] = 0x10U;
+    too_many_block_txs[tx_count_offset + 3U] = 1U;
+    assert(decode_block(too_many_block_txs, decoded_block) == BlockDecodeError::TooManyTransactions);
+    assert(decoded_block.header.hash() == preserved_block_hash);
+
     std::cout << "HJZ native foundation and ledger tests: PASS\n";
 }
