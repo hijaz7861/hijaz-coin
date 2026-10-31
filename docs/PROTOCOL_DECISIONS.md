@@ -31,7 +31,8 @@ Status: engineering draft; not a mainnet specification.
 ## Consensus status
 
 - ADR-0009 defines the evaluation gate for PoW, PoS, and BFT-style PoS.
-- No consensus family, fork-choice rule, finality model, validator/miner eligibility, issuance, reward, or penalty parameters have been selected.
+- Bitcoin-like adaptive PoW is the preferred candidate for detailed design evaluation; ADR-0014 specifies the proposed retarget, target validation, timestamp protections, cumulative-chain-work requirements, and adversarial test gates.
+- PoW is NOT yet adopted. No target block interval, retarget window, proof hash, pow limit, timestamp estimator, chain-work encoding, fork-choice tie-break, reorg policy, miner eligibility, issuance, reward, or penalty parameters have been selected.
 - Structural block validation is not consensus and does not authorize a block as canonical.
 
 ## Open parameters — do not silently assume
