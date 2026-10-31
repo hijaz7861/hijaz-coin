@@ -4,6 +4,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <span>
 #include <vector>
 
 namespace hijaz {
@@ -12,6 +13,18 @@ inline constexpr std::size_t max_public_key_bytes = 16U * 1024U;
 inline constexpr std::size_t max_signature_bytes = 16U * 1024U;
 
 // The suite identifier is protocol data. A zero/unknown suite is always rejected.
+enum class TransactionDecodeError {
+    None,
+    TooShort,
+    InvalidDomain,
+    UnsupportedVersion,
+    InvalidSuite,
+    InvalidLength,
+    LengthOverflow,
+    NonCanonical,
+    InvalidStructure
+};
+
 struct Transaction {
     std::uint8_t format_version{transaction_format_version};
     std::uint16_t authorization_suite{0};
@@ -29,6 +42,11 @@ struct Transaction {
     [[nodiscard]] std::vector<std::uint8_t> canonical_bytes() const;
     [[nodiscard]] Hash256 id() const;
 };
+
+// Strict bounded decoder. On failure, out is left unchanged.
+[[nodiscard]] TransactionDecodeError decode_transaction(
+    std::span<const std::uint8_t> bytes,
+    Transaction& out) noexcept;
 
 [[nodiscard]] Hash256 derive_account_address(
     std::uint16_t authorization_suite,
