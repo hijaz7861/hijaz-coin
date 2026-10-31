@@ -65,9 +65,9 @@ This ADR documents current prototype behavior only. A production network must se
 
 ## Decoder implementation gate
 
-The current prototype implements canonical encoding and hashing only. It does **not** yet provide a canonical byte-to-Transaction decoder. Therefore, the format must not be treated as a complete network/storage interchange implementation.
+A bounded canonical byte-to-Transaction decoder is now present in `native/src/transaction.cpp`. It validates the domain marker, version, nonzero suite, bounded public-key/signature lengths, truncation, exact field framing, structural validity, and byte-for-byte canonical re-encoding. It assigns the output object only after complete validation. Regression tests cover round-trip, truncation, trailing bytes, invalid domain/version, zero suite, oversized key length, and output preservation. These changes are source-level implementation only; they have not yet been compiled or executed on the latest branch.
 
-Before a durable store or P2P message handler accepts serialized transactions, an independently tested decoder must:
+Before a durable store or P2P message handler accepts serialized transactions, the decoder must additionally pass:
 
 - Parse from a bounded byte span; never allocate based solely on an untrusted length field.
 - Require the exact five-byte domain marker and format version.
