@@ -470,9 +470,9 @@ int main() {
     wire_block.header.version = 2;
     wire_block.header.height = 9;
     wire_block.header.timestamp = 1234;
-    wire_block.header.merkle_root = merkle_root({tx});
+    wire_block.header.merkle_root = merkle_root({first_payment});
     wire_block.header.state_root = ledger_state_root(empty_state);
-    wire_block.transactions = {tx};
+    wire_block.transactions = {first_payment};
     const auto block_wire = encode_block(wire_block);
     assert(!block_wire.empty());
     Block decoded_block;
