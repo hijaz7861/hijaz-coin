@@ -1,6 +1,7 @@
 #include "hijaz/block.hpp"
 #include "hijaz/block_execution.hpp"
 #include "hijaz/block_validation.hpp"
+#include "hijaz/block_wire.hpp"
 #include "hijaz/hash.hpp"
 #include "hijaz/ledger.hpp"
 #ifdef HJZ_HAS_OPENSSL_ML_DSA
