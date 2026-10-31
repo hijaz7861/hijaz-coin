@@ -165,6 +165,26 @@ int main() {
     oversized_key_tx_wire[13] = 0x01;
     assert(decode_transaction(oversized_key_tx_wire, decoded_tx) ==
            TransactionDecodeError::InvalidLength);
+    auto empty_key_tx_wire = tx_wire;
+    empty_key_tx_wire[12] = 0;
+    empty_key_tx_wire[13] = 0;
+    empty_key_tx_wire[14] = 0;
+    empty_key_tx_wire[15] = 0;
+    assert(decode_transaction(empty_key_tx_wire, decoded_tx) ==
+           TransactionDecodeError::InvalidLength);
+    auto oversized_signature_tx_wire = tx_wire;
+    const auto signature_length_offset = oversized_signature_tx_wire.size() -
+        tx.signature.size() - 8U;
+    oversized_signature_tx_wire[signature_length_offset] = 0;
+    oversized_signature_tx_wire[signature_length_offset + 1U] = 0;
+    oversized_signature_tx_wire[signature_length_offset + 2U] = 0;
+    oversized_signature_tx_wire[signature_length_offset + 3U] = 0;
+    oversized_signature_tx_wire[signature_length_offset + 4U] = 0;
+    oversized_signature_tx_wire[signature_length_offset + 5U] = 0;
+    oversized_signature_tx_wire[signature_length_offset + 6U] = 0x40;
+    oversized_signature_tx_wire[signature_length_offset + 7U] = 0x01;
+    assert(decode_transaction(oversized_signature_tx_wire, decoded_tx) ==
+           TransactionDecodeError::InvalidLength);
     assert(decoded_tx.id() == preserved_decoded_id);
 
     const auto first_id = tx.id();
