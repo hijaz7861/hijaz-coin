@@ -4,7 +4,7 @@ This directory contains the early C++20 implementation of an independent Layer-1
 
 ## Current prototype scope
 
-- Canonical block-header and Transaction V3 serialization.
+- Canonical block-header and Transaction V3 serialization for the currently implemented encoding paths. Transaction V3 decoding and a complete block-container wire encoding are not implemented; see ADR-0004 decoder gate.
 - Transaction V3 carries an explicit authorization-suite ID and bounded public-key bytes.
 - Account addresses are derived from suite ID + canonical public key using domain-separated SHA3-256; ledger rejects sender/key mismatches.
 - Chain-ID binding, integer amount/fee fields, sequential account nonces, and deterministic signing payload.
