@@ -1,0 +1,33 @@
+name: HJZ Native C++ CI
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hjz-native-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install OpenSSL development files
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes libssl-dev
+
+      - name: Configure Release build
+        run: cmake -S native -B native/build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Compile
+        run: cmake --build native/build --parallel 2
+
+      - name: Run native tests
+        run: ctest --test-dir native/build --output-on-failure
