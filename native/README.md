@@ -4,7 +4,7 @@ This directory contains the early C++20 implementation of an independent Layer-1
 
 ## Current prototype scope
 
-- Canonical block-header and Transaction V3 serialization, plus a bounded canonical Transaction V3 decoder with strict field-length checks, exact framing, structural validation, canonical re-encoding, and output preservation on failure. A complete block-container wire encoding/decoder is not implemented; see ADR-0004.
+- Canonical block-header, complete bounded block-container encoding/decoding, and Transaction V3 serialization, plus a bounded canonical Transaction V3 decoder with strict field-length checks, exact framing, structural validation, canonical re-encoding, and output preservation on failure. A bounded canonical block-container encoder/decoder is implemented in `block_wire.hpp` / `block_wire.cpp`: it frames the V2 header and length-prefixed Transaction V3 records, caps the transaction count at 4096 and total encoded size at 16 MiB, rejects non-canonical/truncated input, and preserves output on decode failure. See ADR-0004.
 - Transaction V3 carries an explicit authorization-suite ID and bounded public-key bytes.
 - Account addresses are derived from suite ID + canonical public key using domain-separated SHA3-256; ledger rejects sender/key mismatches.
 - Chain-ID binding, integer amount/fee fields, sequential account nonces, and deterministic signing payload.
