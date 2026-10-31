@@ -4,7 +4,7 @@ This directory contains the early C++20 implementation of an independent Layer-1
 
 ## Current prototype scope
 
-- Canonical block-header and Transaction V3 serialization for the currently implemented encoding paths. Transaction V3 decoding and a complete block-container wire encoding are not implemented; see ADR-0004 decoder gate.
+- Canonical block-header and Transaction V3 serialization, plus a bounded canonical Transaction V3 decoder with strict field-length checks, exact framing, structural validation, canonical re-encoding, and output preservation on failure. A complete block-container wire encoding/decoder is not implemented; see ADR-0004.
 - Transaction V3 carries an explicit authorization-suite ID and bounded public-key bytes.
 - Account addresses are derived from suite ID + canonical public key using domain-separated SHA3-256; ledger rejects sender/key mismatches.
 - Chain-ID binding, integer amount/fee fields, sequential account nonces, and deterministic signing payload.
@@ -20,7 +20,7 @@ This directory contains the early C++20 implementation of an independent Layer-1
 - Vendor-neutral LedgerStore interface and pre-commit validator checking header version, parent hash, transaction structure/uniqueness, transaction Merkle root, and resulting state root. The validator is only a preflight: ADR-0011 requires a durable backend to replay transactions from its own persisted parent state using a production signature verifier; caller-supplied resulting state is untrusted.
 - Bounded P2P frame codec with protocol magic/version, typed messages, length checks, and a 2 MiB payload cap; outbound encoding rejects unknown message types.
 - P2P framing is transport scaffolding only: it currently has no frame checksum/MAC, peer authentication, encryption, replay protection, handshake state machine, or socket-level resource controls. Do not expose it to untrusted networks as a production peer protocol.
-- Unit tests for hashing, deterministic state roots, address derivation, key/address mismatch, suite rejection, ledger success/replay/chain/signature failures, recipient-overflow atomicity, block structure/version, state-root enforcement, atomic block rollback, storage commit validation, malformed P2P frames, unknown outbound and inbound message types, oversized outbound payloads, and preservation of the prior output frame on decode failure, and inbound rejection tests for unknown types, unsupported versions, oversized declared lengths, short headers, and payload-length mismatches.
+- Unit tests for hashing, deterministic state roots, Transaction V3 decoder round-trip and malformed-input rejection, address derivation, key/address mismatch, suite rejection, ledger success/replay/chain/signature failures, recipient-overflow atomicity, block structure/version, state-root enforcement, atomic block rollback, storage commit validation, malformed P2P frames, unknown outbound and inbound message types, oversized outbound payloads, and preservation of the prior output frame on decode failure, and inbound rejection tests for unknown types, unsupported versions, oversized declared lengths, short headers, and payload-length mismatches.
 - Test assertions remain enabled in Release builds.
 
 ## Critical limitations
