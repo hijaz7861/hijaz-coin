@@ -46,7 +46,7 @@ struct Transaction {
 // Strict bounded decoder. On failure, out is left unchanged.
 [[nodiscard]] TransactionDecodeError decode_transaction(
     std::span<const std::uint8_t> bytes,
-    Transaction& out) noexcept;
+    Transaction& out);
 
 [[nodiscard]] Hash256 derive_account_address(
     std::uint16_t authorization_suite,
